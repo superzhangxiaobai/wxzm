@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>摄像头播放</title>
+    <link rel="stylesheet" href="${ctxPath}/assets/libs/layui/css/layui.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/module/admin.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/module/formSelects/formSelects-v4.css"/>
+    <style>
+    .video{
+    	   	display: block;
+    	   	width: 80%;
+    	   	height: 600px;
+    	   }
+    </style>
+</head>
+
+<body>
+<% include("../layout/loading.html"){} %>
+
+<!-- 正文开始 -->
+<!-- <div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-body">
+            <div class="layui-form toolbar">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <select id="sltKey">
+                            <option value="">请选择搜索条件</option>
+                            <option value="videoname">名称</option>
+                            <option value="videourl">流地址</option>
+                            <option value="videoaddress">物理地址</option>
+                        </select>
+                    </div>
+                    <div class="layui-inline">
+                        <input id="edtSearch" class="layui-input" type="text" placeholder="输入关键字"/>
+                    </div>
+                    <div class="layui-inline">
+                        <button id="btnSearch" class="layui-btn icon-btn"><i class="layui-icon">&#xe615;</i>搜索</button>
+                        <button id="btnAdd" class="layui-btn icon-btn"><i class="layui-icon">&#xe654;</i>添加</button>
+                    </div>
+                </div>
+            </div>
+
+            <table class="layui-table" id="rtspTable" lay-filter="rtspTable"></table>
+        </div>
+    </div>
+</div> -->
+<div class="video" id="video" data-url="rtmp://58.200.131.2:1935/livetv/hunantv"></div>
+
+
+<!-- js部分 -->
+<script type="text/javascript" src="${ctxPath}/assets/libs/layui/layui.js"></script>
+<script type="text/javascript" src="${ctxPath}/assets/js/common.js"></script>
+<script>
+	layui.use(['layer', 'admin', 'element','ckplayer'], function () {
+        /* var $ = layui.jquery;//'layer', 'form', 'table', 'util', 'admin', 'formSelects',
+        var layer = layui.layer;
+        var form = layui.form;
+        var table = layui.table;
+        var util = layui.util;
+        var admin = layui.admin;
+        var formSelects = layui.formSelects; */
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var admin = layui.admin;
+        var ckplayer = layui.ckplayer;
+       //http://img.ksbbs.com/asset/Mon_1703/05cacb4e02f9d9e.mp4
+		//rtmp://58.200.131.2:1935/livetv/hunantv
+        var vUrl = $('#video').data('url'),
+    	videoObject = {
+	        container: '#video',
+	        loop: true,
+	        autoplay: true,
+	        video: [
+	            [vUrl, 'video/rtmp']
+	        ]
+	    };
+		//'rtmp/flv'
+		//'video/mp4'
+    	var player = new ckplayer(videoObject);
+       
+       
+		
+      
+        // 推流
+        function pushRtmp(rtspId, nickName) {
+            top.layer.confirm('确定要推流“' + nickName + '”到服务器吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('rtsp/push', {
+                	rtspId: rtspId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+		//end
+    });
+</script>
+
+</body>
+</html>

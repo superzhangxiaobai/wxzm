@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>路灯统计报表</title>
+    <link rel="stylesheet" href="${ctxPath}/assets/libs/layui/css/layui.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/module/admin.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/module/formSelects/formSelects-v4.css"/>
+</head>
+
+<body>
+<% include("../layout/loading.html"){} %>
+
+<!-- 正文开始 -->
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-body">
+            <div class="layui-form toolbar">
+                <div class="layui-form-item">
+                	<div class="layui-inline">
+                        <label class="layui-form-label w-auto">名称：</label>
+                        <div class="layui-input-inline mr0">
+                            <input id="lampname" class="layui-input" type="text" placeholder="请输入路灯名称"/>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label w-auto">日期：</label>
+                        <div class="layui-input-inline mr0">
+                            <input id="update_time" class="layui-input date-icon" type="text" placeholder="请选择日期范围"/>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <button id="btnSearch" class="layui-btn icon-btn"><i class="layui-icon">&#xe615;</i>搜索</button>
+                    </div>
+                    <!-- <div class="layui-inline">
+                        <select id="sltKey">
+                            <option value="">请选择搜索条件</option>
+                            <option value="lampname">路灯名称</option>
+                            <option value="update_time">时间</option>
+                        </select>
+                    </div>
+                    <div class="layui-inline">
+                        <input id="edtSearch" class="layui-input" type="text" placeholder="输入关键字"/>
+                    </div>
+                    <div class="layui-inline">
+                        <button id="btnSearch" class="layui-btn icon-btn"><i class="layui-icon">&#xe615;</i>搜索</button>
+                        <button id="btnAdd" class="layui-btn icon-btn"><i class="layui-icon">&#xe654;</i>添加</button>
+                    </div> -->
+                </div>
+            </div>
+
+            <table class="layui-table" id="lampTaskTable" lay-filter="lampTaskTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 表格操作列 -->
+<script type="text/html" id="tableBar">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="edit">修改</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    <a class="layui-btn layui-btn-xs" lay-event="imexec">立即执行</a>
+</script>
+<!-- 表格状态列 -->
+<script type="text/html" id="tableState">
+    <input type="checkbox" disabled lay-filter="ckState" value="{{d.taskId}}" lay-skin="switch"
+           lay-text="开始|结束" {{d.state==0?'checked':''}}/>
+</script>
+<script type="text/html" id="toolbarDemo">
+  <div class="layui-btn-container">
+    <button class="layui-btn layui-btn-sm" lay-event="getCheckData"><i class="layui-icon">&#xe601;</i>报表导出</button>
+  </div>
+</script>
+
+<!-- js部分 -->
+<script type="text/javascript" src="${ctxPath}/assets/libs/layui/layui.js"></script>
+<script type="text/javascript" src="${ctxPath}/assets/js/common.js"></script>
+<script>
+    layui.use(['layer', 'form', 'table', 'util', 'admin', 'formSelects','laydate','excel'], function () {
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var form = layui.form;
+        var table = layui.table;
+        var util = layui.util;
+        var admin = layui.admin;
+        var formSelects = layui.formSelects;
+        var laydate = layui.laydate;
+        var excel = layui.excel;
+
+        // 渲染表格
+        var insTb = table.render({
+            elem: '#lampTaskTable',
+            url: 'energy/list',
+            page: true,
+            toolbar: '#toolbarDemo',
+            limit:15,
+            cellMinWidth: 100,
+            cols: [[
+                {type: 'numbers'},
+                {field: 'lampname', title: '路灯名称'},
+                {field: 'power', title: '路灯功率'},
+                /* {field: 'closecron', title: '关灯配置'},
+                {field: 'leixing', title: '类型'},
+                {field: 'memo', title: '备注'}, */
+                {
+                    templet: function (d) {
+                        //return util.toDateString(d.createTime);
+                        return GetDateDiff(util.toDateString(d.createTime),util.toDateString(d.updateTime),"hour").toFixed(4);
+                    }, title: '时长(小时)'
+                },
+                {
+                    templet: function (d) {
+                        //return util.toDateString(d.createTime);
+                        return (GetDateDiff(util.toDateString(d.createTime),util.toDateString(d.updateTime),"hour") * d.power).toFixed(4);
+                    }, title: '能耗(千瓦时)'
+                },
+                {
+                    templet: function (d) {
+                        return util.toDateString(d.createTime);
+                    }, title: '开灯时间'
+                },
+                {
+                    templet: function (d) {
+                        return util.toDateString(d.updateTime);
+                    }, title: '关灯时间'
+                },
+                {templet: '#tableState', title: '状态'}//,
+                /* {align: 'center', toolbar: '#tableBar', title: '操作', minWidth: 218} */
+            ]]
+        });
+        /* table.exportFile(['名字','性别','年龄'], [
+        	  ['张三','男','20'],
+        	  ['李四','女','18'],
+        	  ['王五','女','19']
+        	], 'csv');  */
+        //默认导出 csv，也可以为：xls
+       	//将上述表格示例导出为 csv 文件
+       	//table.exportFile(insTb.config.id, [['名字','性别','年龄'],['张三','男','20']]); //data 为该实例中的任意数量的数据
+       	//-------------------------------------export excel start
+       	//头工具栏事件
+		  table.on('toolbar(lampTaskTable)', function(obj){
+		    switch(obj.event){
+		      case 'getCheckData':
+		    	  exportCustomExcel();
+		      break;
+		      case 'getCheckLength':
+		        var data = checkStatus.data;
+		        layer.msg('选中了：'+ data.length + ' 个');
+		      break;
+		      case 'isAll':
+		        layer.msg(checkStatus.isAll ? '全选': '未全选');
+		      break;
+		    };
+		  });
+       	function exportCustomExcel(){
+       		var searchDate = $('#update_time').val().split(' - ');
+       		var lampname = $('#lampname').val();
+       		//startDate: searchDate[0],
+            //endDate: searchDate[1],
+       		$.ajax({
+    	        url: 'energy/report',
+    	        data: {startDate:searchDate[0], endDate:searchDate[1],lampname: lampname},
+    	        dataType: 'json',
+    	        success: function(res) {
+    	            // 假如返回的 res.data 是需要导出的列表数据
+    	            //console.log(res.data);// [{name: 'wang', age: 18, sex: '男'}, {name: 'layui', age: 3, sex: '女'}]
+    	            // 1. 数组头部新增表头
+    	            //res.data.unshift({lampname: '路灯名称',power: '路灯功率',range:'时长', createTime: '开灯时间','updateTime':'关灯时间'});
+    	            // 2. 如果需要调整顺序，请执行梳理函数
+    	            var rowend = res.data.length + 3;
+    	            var data = excel.filterExportData(res.data, {
+    	            	id:'energyId',
+    	            	lampname:'lampname',
+    	            	power:'power',
+    	            	duration: function(value, line, data) {
+    	                    return  {v:GetDateDiff(util.toDateString(line['createTime']),util.toDateString(line['updateTime']),"hour").toFixed(4),
+    	                    	s:{// s 代表样式
+    	                            alignment: {
+    	                                horizontal: 'center',
+    	                                vertical: 'center',
+    	                            },
+    	                            font: { sz: 14, bold: true, color: { rgb: "FFFFFF" } },
+    	                            fill: { bgColor: { indexed: 64 }, fgColor: { rgb: "2d983c" }}
+    	                        },
+    	                    };
+    	                },
+    	                consumption: function(value, line, data) {
+    	                    return  {v:(GetDateDiff(util.toDateString(line['createTime']),util.toDateString(line['updateTime']),"hour") * line['power']).toFixed(4),
+    	                    	s:{// s 代表样式
+    	                            alignment: {
+    	                                horizontal: 'center',
+    	                                vertical: 'center',
+    	                            },
+    	                            font: { sz: 14, bold: true, color: { rgb: "FFFFFF" } },
+    	                            fill: { bgColor: { indexed: 64 }, fgColor: { rgb: "2d983c" }}
+    	                        },t:'n'
+    	                    };
+    	                },
+    	                createTime:function(value,line,data){return {v:util.toDateString(line['createTime'])}},
+    	                updateTime:function(value,line,data){return {v:util.toDateString(line['updateTime'])}}
+    	            });
+    	            data.unshift({id:'ID',lampname: '路灯名称',power: '路灯功率',duration:'时长(小时)',consumption:'能耗(千瓦时)', createTime: '开灯时间',updateTime:'关灯时间'});
+    	            
+    	            data.unshift({id:'',lampname: '',power: '',duration:'',createTime:{v:searchDate[1]?(searchDate[0]+' - '+searchDate[1]):'',s:{alignment:{ horizontal: 'center',vertical: 'center',}}}, updateTime:''});
+    	            data.unshift({id:'',lampname: '',power: {v:'能耗数据汇总',s:{font:{bold:true},alignment:{ horizontal: 'center',vertical: 'center',}}},duration:'abcddddddd',consumption:'', createTime: '',updateTime:''});
+    	         	// 4. 公式的用法
+    	            data.push({
+    	                id: '',
+    	                //lampname: '总年龄',
+    	                //power: {t: 'n', f: 'SUM(C4:C10)'},
+    	                duration: '总能耗',
+    	                consumption: {t: 'n', f: 'SUM(E4:E'+rowend+')'},
+    	                updateTime: ''
+    	            });
+    	         	// 2. 调用设置样式的函数，传入设置的范围，支持回调
+    	         	// `thin`(细边框) `medium`(中等) `thick`(厚) `dotted`(点线) `hair`(毛) `dashed`(虚线) `mediumDashed`(中等宽度虚线)
+    	         	// `dashDot`( 点) `mediumDashDot`(中等宽度点) `dashDotDot`(虚线带点) `mediumDashDotDot`(中等虚线带点) `slantDashDot`(倾斜虚线点)
+    	            excel.setExportCellStyle(data, 'A3:G3', {
+    	                s: {
+    	                    fill: { bgColor: { indexed: 64 }, fgColor: { rgb: "f2f2f2" } },
+    	                    font: { sz: 12, bold: true },
+    	                    border:{
+    	                    	top:{ style: 'thin', color: { rgb: "000000" } },
+    	                    	right:{ style: 'thin', color: { rgb: "000000" } },
+    	                    	left:{ style: 'thin', color: { rgb: "000000" } },
+    	                    	bottom:{ style: 'dashed', color: { rgb: "22f106" } },
+    	                    	diagonal:{ style: 'thick', color: { rgb: "22f106" } }
+    	                    },
+    	                    alignment: {
+    	                        horizontal: 'center',
+    	                        wrapText:false,
+    	                        vertical: 'center'
+    	                    }
+    	                }
+    	            }, function(cell, newCell, row, config, currentRow, currentCol, fieldKey) {
+    	                // 回调参数，cell:原有数据，newCell:根据批量设置规则自动生成的样式，row:所在行数据，config:传入的配置,currentRow:当前行索引,currentCol:当前列索引，fieldKey:当前字段索引
+    	                //return ((currentRow + currentCol) % 2 === 0) ? newCell : cell;// 隔行隔列上色
+    	                return newCell;
+    	            } );
+    	            excel.setExportCellStyle(data, 'A4:G'+rowend, {
+    	                s: {
+    	                    border:{
+    	                    	top:{ style: 'thin', color: { rgb: "000000" } },
+    	                    	right:{ style: 'thin', color: { rgb: "000000" } },
+    	                    	left:{ style: 'thin', color: { rgb: "000000" } },
+    	                    	bottom:{ style: 'thin', color: { rgb: "000000" } },
+    	                    	diagonal:{ style: 'thick', color: { rgb: "22f106" } }
+    	                    },
+    	                    alignment: {
+    	                        horizontal: 'center',
+    	                        vertical: 'center'
+    	                    }
+    	                }
+    	            }, function(cell, newCell, row, config, currentRow, currentCol, fieldKey) {
+    	                // 回调参数，cell:原有数据，newCell:根据批量设置规则自动生成的样式，row:所在行数据，config:传入的配置,currentRow:当前行索引,currentCol:当前列索引，fieldKey:当前字段索引
+    	                //return ((currentRow + currentCol) % 2 === 0) ? newCell : cell;// 隔行隔列上色
+    	                return newCell;
+    	            } );
+    	        	// 意思是：A列40px，B列60px(默认)，C列120px，D、E、F等均未定义
+    	            var colConf = excel.makeColConfig({
+    	                'F': 120,
+    	                'G': 120
+    	            }, 80);
+    	         	// 意思是：1行40px，2行60px(默认)，3行120px，4/5/6/7等行均未定义
+    	            var rowConf = excel.makeRowConfig({
+    	                //3: 40,
+    	                //4: 60
+    	            }, 60);
+    	         	// 表示合并 A1~E1 行，并且合并 A2~D4行
+    	            var mergeConf = excel.makeMergeConfig([
+    	                ['C1', 'E1'],
+    	                ['F2', 'G2']
+    	            ]);
+    	            // 3. 执行导出函数，系统会弹出弹框
+    	            //导出类型，支持 xlsx、csv、ods、xlsb、fods、biff2
+    	            var timestart = Date.now();
+    	            excel.exportExcel({
+    	                sheet1: data,
+    	               	月度报表汇总:data
+    	            }, '照明统计数据.xlsx', 'xlsx',{
+    	                extend: {
+    	                    '!cols': colConf,
+    	                    '!rows': rowConf,
+    	                    '!merges': mergeConf
+    	                }
+    	            });
+    	            var timeend = Date.now();
+    				var spent = (timeend - timestart) / 1000;
+    				//layer.alert('单纯导出耗时 '+spent+' s');
+    	        }
+    	    });
+       		//end
+       	}
+       	
+       	//-------------------------------------export excel end
+        function GetDateDiff(startTime, endTime, diffType) {
+            //将xxxx-xx-xx的时间格式，转换为 xxxx/xx/xx的格式 
+            startTime = startTime.replace(/\-/g, "/");
+            endTime = endTime.replace(/\-/g, "/");
+            //将计算间隔类性字符转换为小写
+            diffType = diffType.toLowerCase();
+            var sTime =new Date(startTime); //开始时间
+            var eTime =new Date(endTime); //结束时间
+            //作为除数的数字
+            var timeType =1;
+            switch (diffType) {
+                case"second":
+                    timeType =1000;
+                break;
+                case"minute":
+                    timeType =1000*60;
+                break;
+                case"hour":
+                    timeType =1000*3600;
+                break;
+                case"day":
+                    timeType =1000*3600*24;
+                break;
+                default:
+                break;
+            }
+            return parseFloat((eTime.getTime() - sTime.getTime()) / parseInt(timeType));
+        }
+        // 添加
+      /*   $('#btnAdd').click(function () {
+            showEditModel();
+        }); */
+		
+     	// 时间范围
+        laydate.render({
+            elem: '#update_time',
+            type: 'date',
+            range: true,
+            theme: 'molv'
+        });
+     	// 搜索按钮点击事件
+        $('#btnSearch').click(function () {
+            var searchDate = $('#update_time').val().split(' - ');
+            var lampname = $('#lampname').val();
+            insTb.reload({
+                where: {
+                    startDate: searchDate[0],
+                    endDate: searchDate[1],
+                    lampname: lampname
+                }
+            });
+        });
+        // 搜索
+       /*  $('#btnSearch').click(function () {
+            var key = $('#sltKey').val();
+            var value = $('#edtSearch').val();
+            if (value && !key) {
+                layer.msg('请选择搜索条件', {icon: 2});
+            }
+            insTb.reload({where: {searchKey: key, searchValue: value}});
+        }); */
+
+        // 工具条点击事件
+       /*  table.on('tool(lampTaskTable)', function (obj) {
+            var data = obj.data;
+            var layEvent = obj.event;
+            if (layEvent === 'edit') { // 修改
+                showEditModel(data);
+            } else if (layEvent === 'del') { // 删除
+                doDel(data.taskId, data.other);
+            } else if (layEvent === 'imexec') { // 立即执行
+            	execTask(data.taskId, data.other);
+            }
+        }); */
+
+        // 显示表单弹窗
+        function showEditModel(mLampTask) {
+            admin.open({
+                type: 1,
+                title: (mLampTask ? '修改' : '添加') + '定时任务',
+                content: $('#modelLampTask').html(),
+                success: function (layero, dIndex) {
+                    $(layero).children('.layui-layer-content').css('overflow', 'visible');
+                    var url = mLampTask ? 'task/update' : 'task/add';
+                    // 回显数据
+                    //var roleIds = new Array();
+                    if (mLampTask) {
+                        $('input[name="other"]').attr('readonly', 'readonly');
+                        form.val('modelLampTaskForm', mLampTask);
+                        /* for (var i = 0; i < mUser.roles.length; i++) {
+                            roleIds.push(mUser.roles[i].roleId);
+                        } */
+                    } else {
+                        form.render('radio');
+                    }
+                    //formSelects.render('roleId', {init: roleIds});
+                    // 表单提交事件
+                    form.on('submit(modelLampTaskSubmit)', function (data) {
+                        //data.field.roleIds = formSelects.value('roleId', 'valStr');
+                        layer.load(2);
+                        $.post(url, data.field, function (res) {
+                            layer.closeAll('loading');
+                            if (res.code == 200) {
+                                layer.close(dIndex);
+                                layer.msg(res.msg, {icon: 1});
+                                insTb.reload();
+                            } else {
+                                layer.msg(res.msg, {icon: 2});
+                            }
+                        }, 'json');
+                        return false;
+                    });
+                }
+            });
+        }
+
+        // 删除
+        function doDel(taskId, nickName) {
+            top.layer.confirm('确定要删除“' + nickName + '”吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('task/delete', {
+                	lampTaskId: taskId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+
+        // 修改摄像头状态
+        form.on('switch(ckState)', function (obj) {
+            /* layer.load(2);
+            $.post('task/updateState', {
+            	lampTaskId: obj.elem.value,
+                state: obj.elem.checked ? 0 : 1
+            }, function (res) {
+                layer.closeAll('loading');
+                if (res.code == 200) {
+                    layer.msg(res.msg, {icon: 1});
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                    $(obj.elem).prop('checked', !obj.elem.checked);
+                    form.render('checkbox');
+                }
+            }, 'json'); */
+        });
+		
+        // 立即执行
+        function execTask(taskId, nickName) {
+            top.layer.confirm('确定要立即执行“' + nickName + '”定时任务吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('task/execTask', {
+                	taskId: taskId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+       
+	//end
+    });
+</script>
+
+</body>
+</html>

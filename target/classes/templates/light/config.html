@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>路灯配置</title>
+    <link rel="stylesheet" href="${ctxPath}/assets/libs/layui/css/layui.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/module/admin.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/module/formSelects/formSelects-v4.css"/>
+    
+</head>
+
+<body>
+<% include("../layout/loading.html"){} %>
+
+<!-- 正文开始 -->
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-body">
+            <div class="layui-form toolbar">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <select id="sltKey">
+                            <option value="">请选择搜索条件</option>
+                            <option value="nickName">路灯名称</option>
+                            <option value="remark">串口地址</option>
+                            <option value="memo">命令地址</option>
+                            <option value="category">路灯类别</option>
+                        </select>
+                    </div>
+                    <div class="layui-inline">
+                        <input id="edtSearch" class="layui-input" type="text" placeholder="输入关键字"/>
+                    </div>
+                    <div class="layui-inline">
+                        <button id="btnSearch" class="layui-btn icon-btn"><i class="layui-icon">&#xe615;</i>搜索</button>
+                        <button id="btnAdd" class="layui-btn icon-btn"><i class="layui-icon">&#xe654;</i>添加</button>
+                    </div>
+                </div>
+            </div>
+
+            <table class="layui-table" id="lampTable" lay-filter="lampTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 表格操作列 -->
+<script type="text/html" id="tableBar">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="edit">修改</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+	<a class="layui-btn layui-btn-xs" lay-event="auth">配置</a>
+</script>
+<!-- 表格状态列 -->
+<script type="text/html" id="tableState">
+    <input type="checkbox" lay-filter="ckState" value="{{d.lampId}}" lay-skin="switch"
+           lay-text="正常|冻结" {{d.state==0?'checked':''}}/>
+</script>
+<script type="text/html" id="imgTplopen"> 
+    <img style="display: inline-block; width: 30%; height: 100%;" src= {{ "${ctxPath}/light/config/img/"+((d.avatar==null ||d.avatar=='')?'lighthouse.png':d.avatar) }}>
+</script>
+<script type="text/html" id="imgTplclose"> 
+    <img style="display: inline-block; width: 30%; height: 100%;" src= {{ "${ctxPath}/light/config/img/"+((d.unavatar==null||d.unavatar=='')?'lighthouse-c.png':d.unavatar) }}>
+</script>
+<script type="text/html" id="toolbarDemo">
+  <div class="layui-btn-container">
+    <div class="layui-btn-container">
+    	<button class="layui-btn layui-btn-sm" lay-event="update"><i class="layui-icon">&#xe642;</i>编辑</button>
+  	</div>
+  </div>
+</script>
+<!-- 表单弹窗 -->
+<script type="text/html" id="modelLamp">
+    <form id="modelLampForm" lay-filter="modelLampForm" class="layui-form model-form">
+        <input name="lampId" type="hidden"/>
+        <div class="layui-form-item">
+            <label class="layui-form-label">路灯名称</label>
+            <div class="layui-input-inline">
+                <input name="nickName" placeholder="请输入名称" type="text" class="layui-input" maxlength="30"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+        
+		<div class="layui-form-item">
+            <label class="layui-form-label">经度</label>
+            <div class="layui-input-inline">
+                <input name="lat" placeholder="请输入经度" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">纬度</label>
+            <div class="layui-input-inline">
+                <input name="lng" placeholder="请输入纬度" lay-filter="testhello" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">账号</label>
+            <div class="layui-input-inline">
+                <input name="lampname" placeholder="请输入账号" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">串口地址</label>
+            <div class="layui-input-inline">
+                <input name="remark" placeholder="请输入串口地址" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">命令地址</label>
+            <div class="layui-input-inline">
+                <input name="remark1" placeholder="请输入命令地址" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">分组</label>
+            <div class="layui-input-inline">
+                <input name="grouping" placeholder="请输入分组" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">通道</label>
+            <div class="layui-input-inline">
+                <input name="channel" placeholder="请输入通道" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">类别</label>
+            <div class="layui-input-inline">
+                <input name="category" placeholder="请输入类别" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">开灯图像</label>
+            <div class="layui-input-inline">
+                <input id="avatar" name="avatar" placeholder="请上传图片" type="text" class="layui-input" maxlength="50"
+                        />
+				
+				
+            </div>
+			<div class="layui-btn-container">
+			<button style="float:left" id="avatarupload" class="layui-btn layui-btn-normal" type="button">上传</button>
+			<button style="float:left" id="avatarusee" class="layui-btn layui-btn-normal" type="button">查看</button>
+			
+			</div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">关灯图像</label>
+            <div class="layui-input-inline">
+                <input name="unavatar" placeholder="请上传图片" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" />
+            </div>
+			<div class="layui-btn-container">
+				<button style="float:left" id="unavatarupload" class="layui-btn layui-btn-normal" type="button">上传</button>
+				<button style="float:left" id="unavatarusee" class="layui-btn layui-btn-normal" type="button">查看</button>
+			
+			</div>
+        </div>
+        
+        
+        <div class="layui-form-item text-right">
+            <button class="layui-btn layui-btn-primary" type="button" ew-event="closePageDialog">取消</button>
+            <button class="layui-btn" lay-filter="modelLampSubmit" lay-submit>保存</button>
+        </div>
+    </form>
+</script>
+
+<!-- js部分 -->
+<script type="text/javascript" src="${ctxPath}/assets/libs/layui/layui.js"></script>
+<script type="text/javascript" src="${ctxPath}/assets/js/common.js"></script>
+<script>
+    layui.use(['layer', 'form', 'table', 'util', 'admin', 'formSelects','upload','numinput'], function () {
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var form = layui.form;
+        var table = layui.table;
+        var util = layui.util;
+        var admin = layui.admin;
+        var formSelects = layui.formSelects;
+        //得到 upload 对象
+        var upload = layui.upload;
+        var numinp = layui.numinput;
+        
+       
+
+        // 渲染表格
+        var insTb = table.render({
+            elem: '#lampTable',
+            url: 'config/list',
+            page: true,
+            toolbar: '#toolbarDemo',
+            cellMinWidth: 100,
+            cols: [[
+                {type: 'numbers'},
+                {type: 'checkbox'},
+                {field: 'nickName', title: '路灯名称'},
+                {field: 'remark', title: '串口',width:75},
+                {field: 'memo', title: '十六',width:70},
+                {field: 'remark1', title: '地址',width:70},
+                {field: 'grouping', title: '分组',width:80},
+                {field: 'memo1', title: '影组',width:80},
+                {field: 'channel', title: '通道',width:70},
+                {field: 'secondchannel', title: '影通',width:70},//imgTplclose
+                {field: 'category', title: '类别',width:80},
+                {field: 'secondlevel', title: '影类',width:80},//imgTplclose
+                /* {field: 'power', title: '功率',width:80}, */
+                /* {templet: '#imgTplopen', title: '开灯',width:80}, */
+                //{field: 'unavatar', title: '关灯图像'},
+                /* {templet: '#imgTplclose', title: '关灯',width:80}, */
+                {field: 'lat', title: '经度',width:80},
+                {field: 'lng', title: '纬度',width:80},
+                {field: 'longitude', title: '真实经度',width:90},
+                {field: 'latitude', title: '真实纬度',width:90},
+                /* {
+                    templet: function (d) {
+                        return util.toDateString(d.createTime);
+                    }, title: '创建时间'
+                }, */
+                {
+                    templet: function (d) {
+                        return (d.remark2 == '0') ? '正常' : '异常';
+                    }, title: '灯杆'
+                },
+                {templet: '#tableState', title: '状态'},
+                {align: 'center', toolbar: '#tableBar', title: '操作', minWidth: 218}
+            ]]
+        });
+
+        // 添加
+        $('#btnAdd').click(function () {
+            showEditModel();
+        });
+
+        // 搜索
+        $('#btnSearch').click(function () {
+            var key = $('#sltKey').val();
+            var value = $('#edtSearch').val();
+            if (value && !key) {
+                layer.msg('请选择搜索条件', {icon: 2});
+            }
+            insTb.reload({where: {searchKey: key, searchValue: value}});
+        });
+
+        // 工具条点击事件
+        table.on('tool(lampTable)', function (obj) {
+            var data = obj.data;
+            var layEvent = obj.event;
+            if (layEvent === 'edit') { // 修改
+                showEditModel(data);
+            } else if (layEvent === 'del') { // 删除
+                doDel(data.rtspId, data.videoname);
+            } else if (layEvent === 'auth') {  // 权限管理
+                showPermModel(data.lampId);
+            }else if (layEvent === 'pushrtmp') { // 重置密码
+            	pushRtmp(data.rtspId, data.videoname);
+            } else if (layEvent === 'stop') {
+            	stopRtmp(data.rtspId, data.videoname);
+            }
+        });
+		
+      	//监听行双击事件
+        table.on('rowDouble(lampTable)', function(obj){
+        	var data = obj.data;
+        	    
+       	    /* layer.alert(JSON.stringify(data), {
+       	      title: '当前行数据：'
+       	    }); */
+       	 	showLngModel(data.lampId);
+       	    //标注选中样式
+       	    obj.tr.addClass('layui-table-click').siblings().removeClass('layui-table-click');
+          //obj 同上
+        });
+        
+      	//监听头工具栏事件
+        table.on('toolbar(lampTable)', function(obj){
+          var checkStatus = table.checkStatus(obj.config.id)
+          ,data = checkStatus.data; //获取选中的数据
+          switch(obj.event){
+            case 'add':
+              layer.msg('添加');
+            break;
+            case 'update':
+              if(data.length === 0){
+                layer.msg('请选择一行');
+              } else if(data.length > 1){
+                layer.msg('只能同时编辑一个');
+              } else {
+                //layer.alert('编辑 [id]：'+ checkStatus.data[0].lampId);
+                showLngModel(checkStatus.data[0].lampId);
+              }
+            break;
+            case 'delete':
+              if(data.length === 0){
+                layer.msg('请选择一行');
+              } else {
+                layer.msg('删除');
+              }
+            break;
+          };
+        });
+        // 显示表单弹窗
+        function showEditModel(mLamp) {
+        	layer.open({
+                type: 1,
+                area: '500px',
+                skin: 'layui-layer-molv',//layui-layer-lan
+                maxmin:true,
+                title: (mLamp ? '修改' : '添加') + '照明控制',
+                content: $('#modelLamp').html(),
+                success: function (layero, dIndex) {
+                    $(layero).children('.layui-layer-content').css('overflow', 'visible');
+                    var url = mLamp ? 'config/update' : 'config/add';
+                    // 回显数据
+                    //var roleIds = new Array();
+                    if (mLamp) {
+                        $('input[name="lampname"]').attr('readonly', 'readonly');
+                        $('input[name="avatar"]').attr('readonly', 'readonly');
+                    	$('input[name="unavatar"]').attr('readonly', 'readonly');
+                        form.val('modelLampForm', mLamp);
+                        /* for (var i = 0; i < mUser.roles.length; i++) {
+                            roleIds.push(mUser.roles[i].roleId);
+                        } */
+                    } else {
+                    	$('input[name="lampname"]').attr('readonly', 'readonly');
+                    	$('input[name="avatar"]').attr('readonly', 'readonly');
+                    	$('input[name="unavatar"]').attr('readonly', 'readonly');
+                        form.render('radio');
+                    }
+                    //formSelects.render('roleId', {init: roleIds});
+                    $('input[name="lat"]').on('input', function(data){
+                    	console.log("监听");//lampname
+					 	console.log(data);
+					 	console.log($(this).val());
+					 	$('input[name="lampname"]').val("lamp-"+$(this).val()+$('input[name="lng"]').val());
+					}); 
+                    $('input[name="lng"]').on('input', function(data){
+                    	console.log("监听");
+					 	console.log(data);
+					 	console.log($(this).val());
+					 	$('input[name="lampname"]').val("lamp-"+$('input[name="lat"]').val()+$(this).val());
+					});    
+                    // 表单提交事件
+                    form.on('submit(modelLampSubmit)', function (data) {
+                        //data.field.roleIds = formSelects.value('roleId', 'valStr');
+                        layer.load(2);
+                        $.post(url, data.field, function (res) {
+                            layer.closeAll('loading');
+                            if (res.code == 200) {
+                                layer.close(dIndex);
+                                layer.msg(res.msg, {icon: 1});
+                                insTb.reload();
+                            } else {
+                                layer.msg(res.msg, {icon: 2});
+                            }
+                        }, 'json');
+                        return false;
+                    });
+                }
+            });
+        	
+        	 //images（图片）、file（所有文件）、video（视频）、audio（音频）
+            //执行实例
+            var uploadInst = upload.render({
+              elem: '#avatarupload' //绑定元素
+              ,url: 'config/upload' //上传接口
+              ,done: function(res,index, upload){
+            	//假设code=0代表上传成功
+           	    if(res.code == 200){
+           	      //do something （比如将res返回的图片链接保存到表单的隐藏域）
+           	      $('input[name="avatar"]').val(res.img);
+           	      //$('input[name="unavatar"]').attr('readonly', 'readonly');
+           	   	  layer.msg(res.msg, {icon: 1});
+           	    }else{
+           	    	layer.msg(res.msg, {icon: 2});
+           	    }
+            	//获取当前触发上传的元素，一般用于 elem 绑定 class 的情况，注意：此乃 layui 2.1.0 新增
+            	var item = this.item;
+            	layer.closeAll('loading'); //关闭loading
+            	 //文件保存失败
+                //do something
+                //上传完毕回调
+              }
+          	  ,accept: 'images' //允许上传的文件类型
+              //,size: 50 //最大允许上传的文件大小
+              //,auto:false
+              //,bindAction: '#btn'
+              ,field:'file'
+           	  ,choose: function(obj){
+           		    //将每次选择的文件追加到文件队列
+           		    //var files = obj.pushFile();
+           		    
+           		    //预读本地文件，如果是多文件，则会遍历。(不支持ie8/9)
+           		    obj.preview(function(index, file, result){
+           		      console.log(index); //得到文件索引
+           		      console.log(file); //得到文件对象
+           		      console.log(result); //得到文件base64编码，比如图片
+           		      
+           		      //obj.resetFile(index, file, '123.jpg'); //重命名文件名，layui 2.3.0 开始新增
+           		      
+           		      //这里还可以做一些 append 文件列表 DOM 的操作
+           		      
+           		      //obj.upload(index, file); //对上传失败的单个文件重新上传，一般在某个事件中使用
+           		      //delete files[index]; //删除列表中对应的文件，一般在某个事件中使用
+           		    });
+           	  }
+              ,before: function(obj){ //obj参数包含的信息，跟 choose回调完全一致，可参见上文。
+            	    layer.load(); //上传loading
+              }
+              ,error: function(index, upload){
+            	  //当上传失败时，你可以生成一个“重新上传”的按钮，点击该按钮时，执行 upload() 方法即可实现重新上传
+            	  layer.closeAll('loading'); //关闭loading
+            	  layer.msg(res.msg, {icon: 2});
+                //请求异常回调
+              }
+            });
+        	 //关灯图像
+        	  var unuploadInst = upload.render({
+              elem: '#unavatarupload' //绑定元素
+              ,url: 'config/upload' //上传接口
+              ,done: function(res,index, upload){
+            	
+           	    if(res.code == 200){
+           	     
+           	      $('input[name="unavatar"]').val(res.img);
+           	      //$('input[name="unavatar"]').attr('readonly', 'readonly');
+           	   	  layer.msg(res.msg, {icon: 1});
+           	    }else{
+           	    	layer.msg(res.msg, {icon: 2});
+           	    }
+            	//获取当前触发上传的元素，一般用于 elem 绑定 class 的情况，注意：此乃 layui 2.1.0 新增
+            	var item = this.item;
+            	layer.closeAll('loading'); //关闭loading
+            	
+              }
+          	  ,accept: 'images' //允许上传的文件类型
+              ,field:'file'
+           	  ,choose: function(obj){
+           		    obj.preview(function(index, file, result){
+           		      console.log(index); //得到文件索引
+           		      console.log(file); //得到文件对象
+           		      console.log(result); //得到文件base64编码，比如图片
+           		    });
+           	  }
+              ,before: function(obj){ //obj参数包含的信息，跟 choose回调完全一致，可参见上文。
+            	    layer.load(); //上传loading
+              }
+              ,error: function(index, upload){
+            	  layer.msg(res.msg, {icon: 2});
+            	  //当上传失败时，你可以生成一个“重新上传”的按钮，点击该按钮时，执行 upload() 方法即可实现重新上传
+            	  layer.closeAll('loading'); //关闭loading
+            	  
+                //请求异常回调
+              }
+            });
+        	 
+        	 $("#avatarusee").click(function(e){
+        		 layer.photos({
+        		        photos: { "data": [{"src": "${ctxPath}/light/config/img/"+ $('input[name="avatar"]').val()}] }
+        		 		,area:['100px','100px']
+			        	,shift: 1
+			    		,closeBtn:1
+			    		//,offset:'100px'
+			    		,shade: 0
+			    		,shadeClose:true
+        		 		//,anim: 5
+        		 });
+        	 });
+        	 $("#unavatarusee").click(function(e){
+        		 layer.photos({
+        		        photos: { "data": [{"src": "${ctxPath}/light/config/img/"+ $('input[name="unavatar"]').val()}] }
+        		 		,area:['100px','100px']
+			        	,shift: 1
+			    		,closeBtn:1
+			    		//,offset:'100px'
+			    		,shade: 0
+			    		,shadeClose:true
+        		 		//,anim: 5
+        		 });
+        	 });
+        	//---------------------------------------------------------------渲染结束
+        }
+
+        // 删除
+        function doDel(lampId, nickName) {
+            top.layer.confirm('确定要删除“' + nickName + '”吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('config/delete', {
+                	lampId: lampId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+
+        // 修改状态
+        form.on('switch(ckState)', function (obj) {
+            layer.load(2);
+            $.post('config/updateState', {
+                lampId: obj.elem.value,
+                state: obj.elem.checked ? 0 : 1
+            }, function (res) {
+                layer.closeAll('loading');
+                if (res.code == 200) {
+                    layer.msg(res.msg, {icon: 1});
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                    $(obj.elem).prop('checked', !obj.elem.checked);
+                    form.render('checkbox');
+                }
+            }, 'json');
+        });
+		
+        // 停止推流
+        function stopRtmp(rtspId, nickName) {
+            top.layer.confirm('确定要停止“' + nickName + '”推流服务吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('rtsp/stop', {
+                	rtspId: rtspId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+        // 推流
+        function pushRtmp(rtspId, nickName) {
+            top.layer.confirm('确定要推流“' + nickName + '”到服务器吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('rtsp/push', {
+                	rtspId: rtspId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+
+        
+        //--------------------------------------经纬度修改开始
+        function showLngModel(lampId) {
+        	var html = '<label class="layui-form-label">路灯名称</label>'
+	                +'<div class="layui-input-inline">'
+	            +'<input id="nickName" name="nickName" placeholder="请输入路灯名称" type="text" disabled class="layui-input layui-disabled" maxlength="50" '
+	                   +' lay-verType="tips" lay-verify="required" required/>'
+	        +'</div>' ;
+	        html = html + '<label class="layui-form-label">路灯类别</label>'
+	                +'<div class="layui-input-inline">'
+	            +'<input id="category" name="category" placeholder="请输入路灯类别" type="text" disabled class="layui-input layui-disabled" maxlength="50" '
+	                   +' lay-verType="tips" lay-verify="required" required/>'
+	        +'</div>' ;
+	        html = html + '<label class="layui-form-label">真实经度</label>'
+		            +'<div class="layui-input-inline">'
+		        +'<input id="longitude" name="longitude" placeholder="请输入经度" type="text" class="layui-input layui-input-number" min="-999" max="999" data-prec="4" maxlength="50" '
+		               +' lay-verType="tips" lay-verify="required" required/>'
+		    +'</div>' ;
+		    html = html + '<label class="layui-form-label">真实纬度</label>'
+		            +'<div class="layui-input-inline">'
+		        +'<input id="latitude" name="latitude" placeholder="请输入纬度" type="text" class="layui-input layui-input-number" min="-999" max="999" data-prec="4" maxlength="50" '
+		               +' lay-verType="tips" lay-verify="required" required/>'
+		    +'</div>' ;
+		    html = html + '<label class="layui-form-label">二级分组</label>'
+		            +'<div class="layui-input-inline">'
+		        +'<input id="memo1" name="memo1" placeholder="请输入二级分组" type="text" class="layui-input" maxlength="50" '
+		               +' lay-verType="tips" lay-verify="required" required/>'
+		    +'</div>' ;
+		    html = html + '<label class="layui-form-label">灯塔备注</label>'
+		            +'<div class="layui-input-inline">'
+		        +'<input id="memo3" name="memo3" placeholder="请输入灯塔备注" type="text" class="layui-input" maxlength="50" '
+		               +' lay-verType="tips" lay-verify="required" required/>'
+		    +'</div>' ;
+		    admin.open({
+                title: '经纬度设置',
+                btn: ['保存', '取消'],
+                //content: '<ul id="treeAuth" class="ztree"></ul>',
+                area: ['360px','500px'],
+                content: html,
+                success: function (layero, index) {
+                    $(layero).children('.layui-layer-content').css({'max-height': '300px', 'overflow': 'auto'});
+                    //layer.load(2);
+                    //layer.closeAll('loading');
+                    numinp.init({
+					    // 123：123键置顶, 789：789键置顶
+					    topBtns: 123,
+					    // 右侧功能按钮
+					    rightBtns: true,
+					    // 监听键盘事件
+					    listening: true,
+					    // 批量配置默认小数精确度，默认 -1 不处理精确度，0 表示禁止输入小数
+					    defaultPrec: -1,
+					    // 初始化回调
+					    initEnd: $.noop,
+					    // 触发显示回调
+					    showEnd: $.noop,
+					    // 自定义 z-index
+					    zIndex: 19999999
+					});
+                    $("div.layui-layer-content").css("max-height","800px");
+                    $.get('config/get', {
+                        lampId: lampId
+                    }, function (res) {
+                        
+                        //layer.closeAll('loading');
+                        if (200 == res.code) {
+                            //layer.msg(res.msg, {icon: 1});
+                            $('#nickName').val(res.lamp.nickName);
+                            $('#category').val(res.lamp.category);
+                            $('#longitude').val(res.lamp.longitude);
+                            $('#latitude').val(res.lamp.latitude);
+                            $('#memo1').val(res.lamp.memo1);
+                            $('#memo3').val(res.lamp.memo3);
+                        } else {
+                            layer.msg(res.msg, {icon: 2});
+                        }
+                    }, 'json');  
+                },
+                yes: function (index) {
+                    layer.load(2);
+                    
+                    $.post('config/updateLng', {
+                    	lampId: lampId,
+                    	memo1:$('#memo1').val().trim(),
+                    	memo3:$('#memo3').val().trim(),
+                    	longitude: $('#longitude').val().trim(),
+                    	latitude:$('#latitude').val().trim()
+                    }, function (res) {
+                        layer.closeAll('loading');
+                        if (200 == res.code) {
+                            layer.msg(res.msg, {icon: 1});
+                            layer.close(index);
+                            insTb.reload();
+                        } else {
+                            layer.msg(res.msg, {icon: 2});
+                        }
+                    }, 'json'); 
+                }
+            });
+        }
+        //--------------------------------------经纬度修改结束
+        
+        //-------------------------------------------------开始
+        // 权限管理
+        function showPermModel(lampId) {
+        	var html = '<label class="layui-form-label">类别名称</label>'
+	                +'<div class="layui-input-inline">'
+	            +'<input id="secondlevel" name="secondlevel" placeholder="请输入类别名称" type="text" class="layui-input" maxlength="50" '
+	                   +' lay-verType="tips" lay-verify="required" required/>'
+	        +'</div>' ;
+	        html = html + '<label class="layui-form-label">二级通道</label>'
+	                +'<div class="layui-input-inline">'
+	            +'<input id="secondchannel" name="secondchannel" placeholder="请输入通道名称" type="text" class="layui-input" maxlength="50" '
+	                   +' lay-verType="tips" lay-verify="required" required/>'
+	        +'</div>' ;
+	        html = html + '<label class="layui-form-label">路灯功率</label>'
+		            +'<div class="layui-input-inline">'
+		        +'<input id="power" name="power" placeholder="请输入路灯功率" type="text" class="layui-input" maxlength="50" '
+		               +' lay-verType="tips" lay-verify="required" required/>'
+		    +'</div>' ;
+		    html = html + '<label class="layui-form-label">二级功率</label>'
+		            +'<div class="layui-input-inline">'
+		        +'<input id="secondpower" name="secondpower" placeholder="请输入路灯功率" type="text" class="layui-input" maxlength="50" '
+		               +' lay-verType="tips" lay-verify="required" required/>'
+		    +'</div>' ;
+            admin.open({
+                title: '二级类别设置',
+                btn: ['保存', '取消'],
+                //content: '<ul id="treeAuth" class="ztree"></ul>',
+                content: html,
+                success: function (layero, index) {
+                    $(layero).children('.layui-layer-content').css({'max-height': '300px', 'overflow': 'auto'});
+                    //layer.load(2);
+                    //layer.closeAll('loading');
+                    $.get('config/get', {
+                        lampId: lampId
+                    }, function (res) {
+                        
+                        //layer.closeAll('loading');
+                        if (200 == res.code) {
+                            //layer.msg(res.msg, {icon: 1});
+                            $('#secondlevel').val(res.lamp.secondlevel);
+                            $('#secondchannel').val(res.lamp.secondchannel);
+                            $('#power').val(res.lamp.power);
+                            $('#secondpower').val(res.lamp.secondpower);
+                        } else {
+                            layer.msg(res.msg, {icon: 2});
+                        }
+                    }, 'json');  
+                },
+                yes: function (index) {
+                    layer.load(2);
+                    
+                    $.post('config/updateSecondLevel', {
+                    	lampId: lampId,
+                    	secondlevel: $('#secondlevel').val().trim(),
+                    	secondchannel: $('#secondchannel').val().trim(),
+                    	power: $('#power').val().trim(),
+                    	secondpower:$('#secondpower').val().trim()
+                    }, function (res) {
+                        layer.closeAll('loading');
+                        if (200 == res.code) {
+                            layer.msg(res.msg, {icon: 1});
+                            layer.close(index);
+                            insTb.reload();
+                        } else {
+                            layer.msg(res.msg, {icon: 2});
+                        }
+                    }, 'json'); 
+                }
+            });
+        }
+        //--------------------------------------------------结束
+    });
+</script>
+
+</body>
+</html>

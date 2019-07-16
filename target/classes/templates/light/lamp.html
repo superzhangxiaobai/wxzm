@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>路灯管理</title>
+    <link rel="stylesheet" href="${ctxPath}/assets/libs/layui/css/layui.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/module/admin.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/module/formSelects/formSelects-v4.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/libs/leaflet/leaflet.css" />
+	<script src="${ctxPath}/assets/libs/leaflet/leaflet.js"></script>
+	<style type="text/css">
+			#mapid { height: 800px; }
+			label.layui-form-label {
+			    float: left;
+			    display: block;
+			    padding: 9px 15px;
+			    width: 80px;
+			    font-weight: 400;
+			    line-height: 20px;
+			    text-align: right;
+			}
+			.layui-form-switch {
+			    margin-top: 90px;
+			}
+			.other .layui-form-switch {
+			    margin-top: 18px;
+			}
+			div.layui-layer.layui-layer-page.layui-layer-admin {
+			    z-index: 19891015;
+			    width: 270px;
+			    position: absolute;
+			    top: 70px;
+			    left: 355px;
+			}
+			div.layui-form-item .layui-form-checkbox {
+			    margin-top: 24px;
+			}
+			button.leaflet-control{
+				border:0px solid red;
+			}
+	</style>  
+</head>
+
+<body>
+<% include("../layout/loading.html"){} %>
+
+<!-- 正文开始 -->
+<div id="mapid"></div>
+<!-- <div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-body">
+            <div class="layui-form toolbar">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <select id="sltKey">
+                            <option value="">请选择搜索条件</option>
+                            <option value="videoname">名称</option>
+                            <option value="videourl">流地址</option>
+                            <option value="videoaddress">物理地址</option>
+                        </select>
+                    </div>
+                    <div class="layui-inline">
+                        <input id="edtSearch" class="layui-input" type="text" placeholder="输入关键字"/>
+                    </div>
+                    <div class="layui-inline">
+                        <button id="btnSearch" class="layui-btn icon-btn"><i class="layui-icon">&#xe615;</i>搜索</button>
+                        <button id="btnAdd" class="layui-btn icon-btn"><i class="layui-icon">&#xe654;</i>添加</button>
+                        <button id="btnOpenAll" class="layui-btn icon-btn"><i class="layui-icon">&#xe605;</i>一键开灯</button>
+                        <button id="btnCloseAll" class="layui-btn icon-btn"><i class="layui-icon">&#x1006;</i>一键关灯</button>
+                    </div>
+                </div>
+            </div>
+
+			<div id="mapid"></div>
+            <table class="layui-table" id="rtspTable" lay-filter="rtspTable"></table>
+        </div>
+    </div>
+</div> -->
+
+<!-- 
+<form id="modelLampForm" lay-filter="modelLampForm" class="layui-form model-form">
+        <input name="lampId" type="hidden"/>
+		<input id="lat" name="lat" type="hidden"/>
+		<input id="lng" name="lng" type="hidden"/>
+		<input id="lampname" name="lampname" type="hidden"/>
+		<input id="lng" name="remark" type="hidden"/>
+		<input id="lng" name="memo" type="hidden"/>
+        <div class="layui-form-item">
+            <label class="layui-form-label">
+				<img id="before" src="${ctxPath}/assets/images/lamp-c.png" style="width: 25px;height: 60px;" />
+			</label>
+            <div class="layui-input-block">
+				<input type="checkbox" name="lampBefore" value="1" lay-filter="direction" title="前">
+				<input type="checkbox" name="switch" lay-skin="switch">
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">
+				<img id="after" src="${ctxPath}/assets/images/lamp-c.png" style="width: 25px;height: 60px;" />
+			</label>
+            <div class="layui-input-block">
+                <input type="checkbox" name="lampAfter" value="1" lay-filter="direction" title="后">
+            </div>
+        </div>
+		<div class="layui-form-item">
+             <label class="layui-form-label">
+				<img id="left" src="${ctxPath}/assets/images/lamp-c.png" style="width: 25px;height: 60px;" />
+			</label>
+            <div class="layui-input-block">
+               <input type="checkbox" name="lampLeft" value="1" lay-filter="direction" title="左">
+            </div>
+		
+        </div>
+        <div class="layui-form-item">
+           <label class="layui-form-label">
+				<img id="right" src="${ctxPath}/assets/images/lamp-c.png" style="width: 25px;height: 60px;" />
+			</label>
+            <div class="layui-input-block">
+                <input type="checkbox" name="lampRight" value="1" lay-filter="direction" title="右">
+            </div>
+ 			
+        </div>
+        <div class="layui-form-item text-right">
+            <button class="layui-btn layui-btn-primary" type="button" ew-event="closePageDialog">取消</button>
+            <button class="layui-btn" lay-filter="modelLampSubmit" lay-submit>保存</button>
+        </div>
+    </form>
+ -->
+<!-- 表单弹窗 -->
+<script type="text/html" id="modelLamp">
+    <form id="modelLampForm" lay-filter="modelLampForm" class="layui-form model-form">
+        <input name="lampId" type="hidden"/>
+		<input id="lat" name="lat" type="hidden"/>
+		<input id="lng" name="lng" type="hidden"/>
+		<input id="lampname" name="lampname" type="hidden"/>
+		<input id="remark" name="remark" type="hidden"/>
+		<input id="memo" name="memo" type="hidden"/>
+		<input name="grouping" type="hidden"/>
+		<input name="channel" type="hidden"/>
+		<input name="category" type="hidden"/>
+		<input name="secondlevel" type="hidden"/>
+		<input name="memo1" type="hidden"/>
+        <div class="layui-form-item">
+            <label class="layui-form-label">
+				<img id="before" src="${ctxPath}/assets/images/light/lighthouse-c.png" style="width: 90px;height: 180px;" />
+			</label>
+            <div class="layui-input-block">
+				<input id="lampBefore" type="checkbox" name="lampBefore" lay-filter="direction" value="1" lay-skin="switch" lay-text="关灯|开灯">
+            </div>
+        </div>
+		
+        <div class="layui-form-item text-right" style="display:none">
+            <button class="layui-btn layui-btn-primary" type="button" ew-event="closePageDialog">取消</button>
+            <button class="layui-btn" lay-filter="modelLampSubmit" lay-submit>保存</button>
+        </div>
+    </form>
+</script>
+
+<script type="text/html" id="modelLamp2">
+    <form id="modelLampForm" lay-filter="modelLampForm" class="layui-form model-form">
+        <input name="lampId" type="hidden"/>
+		<input id="lat" name="lat" type="hidden"/>
+		<input id="lng" name="lng" type="hidden"/>
+		<input id="lampname" name="lampname" type="hidden"/>
+		<input id="remark" name="remark" type="hidden"/>
+		<input id="memo" name="memo" type="hidden"/>
+		<input name="grouping" type="hidden"/>
+		<input name="channel" type="hidden"/>
+		<input name="category" type="hidden"/>
+		<input name="secondlevel" type="hidden"/>
+		<input name="secondchannel" type="hidden"/>
+        <div class="layui-form-item">
+            <label class="layui-form-label">
+				<img id="before" src="${ctxPath}/assets/images/light/lighthouse-c.png" style="width: 90px;height: 180px;" />
+			</label>
+            <div class="layui-input-block">
+				<input id="lampBefore" type="checkbox" name="lampBefore" lay-filter="direction" value="1" lay-skin="switch" lay-text="关灯|开灯">
+            </div>
+			<div class="layui-input-block other">
+				<input type="checkbox" name="lampSecond" lay-filter="direction2" value="1" lay-skin="switch" lay-text="关路灯|开路灯">
+            </div>
+        </div>
+		
+        <div class="layui-form-item text-right" style="display:none">
+            <button class="layui-btn layui-btn-primary" type="button" ew-event="closePageDialog">取消</button>
+            <button class="layui-btn" lay-filter="modelLampSubmit" lay-submit>保存</button>
+        </div>
+    </form>
+</script>
+
+<!-- js部分 -->
+<script type="text/javascript" src="${ctxPath}/assets/libs/layui/layui.js"></script>
+<script type="text/javascript" src="${ctxPath}/assets/js/common.js"></script>
+<script>
+	layui.use(['layer', 'form', 'table', 'util', 'admin', 'formSelects','element'], function () {
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var form = layui.form;
+        var element = layui.element;
+      	//var table = layui.table;
+        //var util = layui.util;
+        var admin = layui.admin;
+        //var formSelects = layui.formSelects; 
+        //var loading = layui.loading;
+		//form.render();
+        // 渲染表格
+        var mymap = L.map('mapid').setView([0, 0], 3);//13
+		$('#mapid').height($(document).height() - 3);
+        //https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+        //${ctxPath}/assets/map/port/{z}/{x}/{y}.png
+		L.tileLayer('${ctxPath}/assets/map/port/{z}/{x}/{y}.png', {
+		    attribution: 'Map data &copy; <a href="http://www.zljt-port.com/">中联今通</a>',
+		    minZoom: 2,
+		    maxZoom: 5,//18
+		    id: 'mapbox.streets',
+		    tms: true,
+    		noWrap: true
+		    //accessToken: 'your.mapbox.access.token'
+		}).addTo(mymap);
+        
+		var lampIcon = L.Icon.extend({
+		    //iconUrl: '${ctxPath}/assets/images/light/lighthouse-c.png',
+		    /*shadowUrl: 'leaf-shadow.png',*/
+			options: {
+				iconSize:     [72, 88], // size of the icon
+			    //shadowSize:   [50, 64], // size of the shadow
+			    iconAnchor:   [30, 84], // point of the icon which will correspond to marker's location
+			    //shadowAnchor: [4, 62],  // the same for the shadow
+			    popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+			}
+		    
+		});
+		var LightIcon = L.Icon.extend({
+		    options: {
+		    	//shadowUrl: '${ctxPath}/assets/images/light/ludenggray-c.png',
+		    	//shadowSize:   [27, 64],
+		    	iconSize:     [72, 88],
+		        iconAnchor:   [8, 84],
+		        //shadowAnchor: [3, 62],
+		        popupAnchor:  [-3, -76]
+		    }
+		});
+		var ShadowIcon = L.Icon.extend({
+		    options: {
+		    	shadowUrl: '${ctxPath}/assets/images/light/smallludeng-c.png',
+		    	shadowSize:   [27, 50],
+		    	iconSize:     [72, 88],
+		        iconAnchor:   [30, 84],
+		        shadowAnchor: [-5, 48],
+		        popupAnchor:  [-3, -76]
+		    }
+		});
+		var ShadowOpenIcon = L.Icon.extend({
+		    options: {
+		    	shadowUrl: '${ctxPath}/assets/images/light/smallludeng.png',
+		    	shadowSize:   [27, 50],
+		    	iconSize:     [72, 88],
+		        iconAnchor:   [30, 84],
+		        shadowAnchor: [-5, 48],
+		        popupAnchor:  [-3, -76]
+		    }
+		});
+		var TopIcon = L.Icon.extend({
+		    options: {
+		    	//shadowUrl: '${ctxPath}/assets/images/lamp-c.png',
+		    	//shadowSize:   [27, 64],
+		    	iconSize:     [46, 24],
+		        iconAnchor:   [23, 23],
+		        //shadowAnchor: [-8, 62],
+		        popupAnchor:  [-3, -76]
+		    }
+		});
+		var globalCloseShadowOpenIcon = new ShadowOpenIcon({iconUrl: '${ctxPath}/assets/images/light/lighthouse-c.png'}) ;
+		var globalCloseShadowCloseIcon = new ShadowIcon({iconUrl: '${ctxPath}/assets/images/light/lighthouse-c.png'}) ; 
+		var globalOpenShadowCloseIcon = new ShadowIcon({iconUrl: '${ctxPath}/assets/images/light/lighthouse.png'}) ;
+		var globalOpenShadowOpenIcon = new ShadowOpenIcon({iconUrl: '${ctxPath}/assets/images/light/lighthouse.png'}) ;
+		var globalCloseIcon = new LightIcon({iconUrl: '${ctxPath}/assets/images/light/lighthouse-c.png'}) ;
+		var globalOpenIcon = new LightIcon({iconUrl: '${ctxPath}/assets/images/light/lighthouse.png'}) ;
+		var ludengCloseIcon = new LightIcon({iconUrl: '${ctxPath}/assets/images/light/ludeng-c.png'}) ;
+		var ludengOpenIcon = new LightIcon({iconUrl: '${ctxPath}/assets/images/light/ludeng.png'}) ;
+		var dingdengCloseIcon = new TopIcon({iconUrl: '${ctxPath}/assets/images/light/dingdeng-c.png'}) ;
+		var dingdengOpenIcon = new TopIcon({iconUrl: '${ctxPath}/assets/images/light/dingdeng.png'}) ;
+		var ludengGrayCloseIcon = new LightIcon({iconUrl: '${ctxPath}/assets/images/light/ludenggray-c.png'}) ;
+		var ludengGrayOpenIcon = new LightIcon({iconUrl: '${ctxPath}/assets/images/light/ludenggray.png'}) ;
+		var globalLampCloseIcon = new lampIcon({iconUrl: '${ctxPath}/assets/images/light/lighthouse-c.png'}) ;
+		var globalLampOpenIcon = new lampIcon({iconUrl: '${ctxPath}/assets/images/light/lighthouse.png'}) ;
+		var globalChecked = false ;
+		/* L.marker([-3.49, 61.9], {icon: lampIcon}).addTo(mymap).on('click',function(e){
+			var lat = e.latlng.lat.toString() ;
+			var lng = e.latlng.lng.toString() ;
+			var lampname = "lamp-" + lat + lng ;
+			var cus = {} ;
+			cus.lat = e.latlng.lat ;
+			cus.lng = e.latlng.lng ;
+			cus.lampname = lampname ;
+			
+			//showEditModel(null,null);
+			console.log("--------light");
+		}); */
+		var lamplist = {} ;//路灯数据集合，获取单个路灯
+		var locationlist = {} ;//路灯事件列表
+		var lightlist = [] ;//路灯列表用于循环
+		var dellamplist = [] ;//暂时没用
+		$.post('lamp/list', {
+            type: '1'
+        }, function (res) {
+            layer.closeAll('loading');
+            if (res.code == 200) {
+                //layer.msg(res.msg, {icon: 1});
+                 //showEditModel(res.lamp,null);
+                 var list = res.lamp ;
+                 lightlist = list ;
+                 for(var i = 0 ;i < list.length;i++){
+                	 //====================循环开始
+                	 lamplist[list[i].lampname] = list[i] ;
+                	var tmpIcon = new LightIcon({iconUrl: '${ctxPath}/assets/images/light/lighthouse-c.png'}) ;
+                	if(list[i].code != null && list[i].code !=""){
+                		//"${ctxPath}/light/config/img/"+((d.avatar==null ||d.avatar=='')?'lighthouse.png':d.avatar
+                		if(list[i].code == "0000"){
+                			tmpIcon = new LightIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                			if(list[i].category == "顶灯"){
+                				tmpIcon = new TopIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                			}
+                			
+                			if(list[i].category == "灯塔"){
+                				tmpIcon = new lampIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                			}
+                			if(list[i].secondlevel == "路灯" && list[i].lampSecond == 0){
+                				tmpIcon = new ShadowIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                			}
+                			if(list[i].secondlevel == "路灯" && list[i].lampSecond == 1){
+                				tmpIcon = new ShadowOpenIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                			}
+                			//ShadowIcon
+                		}else if(list[i].code == "1111"){
+                			tmpIcon = new LightIcon({iconUrl: ((list[i].avatar!='')?("${ctxPath}/light/config/img/"+list[i].avatar):'${ctxPath}/assets/images/light/lighthouse.png')}) ;
+                			if(list[i].category == "顶灯"){
+                				tmpIcon = new TopIcon({iconUrl: ((list[i].avatar!='')?("${ctxPath}/light/config/img/"+list[i].avatar):'${ctxPath}/assets/images/light/lighthouse.png')}) ;
+                			}
+                			
+                			if(list[i].category == "灯塔"){
+                				tmpIcon = new lampIcon({iconUrl: ((list[i].avatar!='')?("${ctxPath}/light/config/img/"+list[i].avatar):'${ctxPath}/assets/images/light/lighthouse.png')}) ;
+                			}
+                			if(list[i].secondlevel == "路灯" && list[i].lampSecond == 1){
+                				tmpIcon = new ShadowOpenIcon({iconUrl: ((list[i].avatar!='')?("${ctxPath}/light/config/img/"+list[i].avatar):'${ctxPath}/assets/images/light/lighthouse.png')}) ;
+                			}
+                			if(list[i].secondlevel == "路灯" && list[i].lampSecond == 0){
+                				tmpIcon = new ShadowIcon({iconUrl: ((list[i].avatar!='')?("${ctxPath}/light/config/img/"+list[i].avatar):'${ctxPath}/assets/images/light/lighthouse.png')}) ;
+                			}
+                		}else{
+                			tmpIcon = new LightIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                			if(list[i].secondlevel == "路灯"){
+                				tmpIcon = new ShadowIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                			}
+                			
+                			if(list[i].category == "灯塔"){
+                				tmpIcon = new lampIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                			}
+                		}
+                	}else{
+                		tmpIcon = new LightIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                		if(list[i].category == "顶灯"){
+                			tmpIcon = new TopIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                		}
+                		if(list[i].secondlevel == "路灯"){
+            				tmpIcon = new ShadowIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+            			}
+                		//lampIcon
+                		if(list[i].category == "灯塔"){
+                			tmpIcon = new lampIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+                		}
+                	}
+					var tmplocation = L.marker([list[i].lat, list[i].lng], {icon: tmpIcon}).addTo(mymap).on('click',function(e){
+						var _this = this ;
+						showEditModel(lamplist["lamp-"+e.latlng.lat.toString()+e.latlng.lng.toString()],_this);
+						//console.log("--------light");
+					});
+					locationlist[list[i].lampname] = tmplocation ;
+					dellamplist.push(tmplocation);
+                	 //====================循环结束
+                 }
+                 console.log("----------------修改");
+                //修改
+            } else {
+                //layer.msg(res.msg, {icon: 2});
+                //showEditModel(null,cus);
+                layer.msg(res.msg, {icon: 2});
+                console.log("----------------添加");
+                //添加
+            }
+        }, 'json');
+       //-------------------------------------end
+
+        // 添加
+        $('#btnAdd').click(function () {
+            showEditModel(null,null);
+        });
+
+        // 搜索
+        $('#btnSearch').click(function () {
+            var key = $('#sltKey').val();
+            var value = $('#edtSearch').val();
+            if (value && !key) {
+                layer.msg('请选择搜索条件', {icon: 2});
+            }
+            insTb.reload({where: {searchKey: key, searchValue: value}});
+        });
+		//btnOpenAll
+		$('#btnOpenAll').click(function () {
+			var nickName = "一键开灯" ;
+			top.layer.confirm('确定要“' + nickName + '”吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('lamp/openclose', {
+                    id: 1
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        //-------------------------------开始
+                       
+						for(var i = 0 ;i < lightlist.length;i++){
+							lightlist[i].lampBefore = 1 ;
+							var linshiweizhi= locationlist[lightlist[i].lampname] ;
+							if(lightlist[i].category == "顶灯"){
+								linshiweizhi.setIcon(dingdengOpenIcon);
+							}else if(lightlist[i].category == "路灯蓝"){
+								linshiweizhi.setIcon(ludengOpenIcon);
+							}else if(lightlist[i].category == "路灯灰"){
+								linshiweizhi.setIcon(ludengGrayOpenIcon);
+							}else{
+								linshiweizhi.setIcon(globalOpenIcon);
+							}
+							// ---
+						}
+                        //-------------------------------结束
+                        //location.reload();//刷新当前页
+                        //insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+            //
+        });
+		var dengzhuangtai=null;
+		// 一键开关灯和页面定时刷新锁
+		var openclosereload = false;
+		var onekeyvalidation = {};
+		function yijiankaideng(){
+			var nickName = "一键开灯" ;
+			dengzhuangtai = "开启";
+			top.layer.confirm('确定要“' + nickName + '”吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                var timer1 = setInterval(onekey,1000);
+                openclosereload = true;
+                $.post('lamp/openclose', {
+                    id: 1
+                }, function (res) {
+                    layer.closeAll('loading');
+                    element.progress('demo', '100%')
+                    clearInterval(timer1);
+                    offset = 0 ;
+                    openclosereload = false;
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        //-------------------------------开始
+                       
+						for(var i = 0 ;i < lightlist.length;i++){
+							if(onekeyvalidation[lightlist[i].lampname] == true){
+								continue;
+							}
+							lightlist[i].lampBefore = 1 ;
+							lamplist[lightlist[i].lampname].lampBefore = 1 ;
+							var linshiweizhi= locationlist[lightlist[i].lampname] ;
+							if(lightlist[i].category == "顶灯"){
+								linshiweizhi.setIcon(dingdengOpenIcon);
+							}else if(lightlist[i].category == "路灯蓝"){
+								linshiweizhi.setIcon(ludengOpenIcon);
+							}else if(lightlist[i].category == "路灯灰"){
+								linshiweizhi.setIcon(ludengGrayOpenIcon);
+							}else{
+								if(lightlist[i].secondlevel == '路灯'){
+									lamplist[lightlist[i].lampname].lampSecond = 1 ;
+									lightlist[i].lampSecond = 1 ;
+									linshiweizhi.setIcon(globalOpenShadowOpenIcon);
+								}else{
+									linshiweizhi.setIcon(globalLampOpenIcon);
+								}
+								//linshiweizhi.setIcon(globalOpenIcon);
+							}
+							// ---
+						}
+                        //-------------------------------结束
+                        //location.reload();//刷新当前页
+                        //insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+			//end
+		}
+		//---------------------------------------------------start
+		var MyOpenControl = L.Control.extend({
+	            onAdd: function() {
+	                var button = L.DomUtil.create('button');
+	                button.innerHTML = '<button class="layui-btn icon-btn"><i class="layui-icon">&#xe605;</i>一键开灯</button>';
+	                
+	                L.DomEvent.on(button, 'click', function () {
+	                    console.log("一键开灯");
+	                    yijiankaideng();
+	                });
+	                return button;
+	            }
+	        });
+		var MyCloseControl = L.Control.extend({
+            onAdd: function() {
+                var button = L.DomUtil.create('button');
+                button.innerHTML = '<button class="layui-btn icon-btn"><i class="layui-icon">&#x1006;</i>一键关灯</button>';
+                
+                L.DomEvent.on(button, 'click', function () {
+                    console.log("一键关灯");
+                    yijianguandeng();
+                });
+                return button;
+            }
+        });
+		var MySyncControl = L.Control.extend({
+            onAdd: function() {
+                var button = L.DomUtil.create('button');
+                button.innerHTML = '<button class="layui-btn icon-btn"><i class="layui-icon">&#xe666;</i>手动同步</button>';
+                
+                L.DomEvent.on(button, 'click', function () {
+                    console.log("手动同步");
+                    $.post('lamp/syncHand', {
+                        id: 1
+                    }, function (res) {
+                        
+                    }, 'json');
+                    //end
+                });
+                return button;
+            }
+        });
+		
+		var openControl = (new MyOpenControl()).addTo(mymap);
+		var closeControl = (new MyCloseControl()).addTo(mymap);
+		//var syncControl = (new MySyncControl()).addTo(mymap);
+		var offset = 0 ;
+		//---------------------------------------------------end
+		function onekey(){
+			$.get('lamp/onekey', {
+                offset: offset
+            }, function (res) {
+            	console.log("--------------------------状态");
+            	$('#jindutiao').css('display','block');
+            	
+            	
+            	for(var i = 0 ;i < res.length;i++){
+            		
+            		var txt3=document.createElement("div");  // 以 DOM 创建新元素
+            		element.progress('demo', Math.ceil((res[i].lampId/74)*100)+'%')
+            		txt3.innerHTML="序号："+(offset+i+1)+",&nbsp;&nbsp;&nbsp;"+res[i].nickName+",&nbsp;&nbsp;&nbsp;"+res[i].category+",&nbsp;&nbsp;&nbsp;"+dengzhuangtai;
+            		if(res[i].lampWarn == 1){
+						onekeyvalidation[res[i].lampname] = true;
+						txt3.innerHTML="序号："+(offset+i+1)+",&nbsp;&nbsp;&nbsp;"+res[i].nickName+",&nbsp;&nbsp;&nbsp;"+res[i].category+",&nbsp;&nbsp;&nbsp;"+res[i].memo3;
+					}
+            		txt3.style="color:#FF33CC;margin-top:5px";
+            		$('#onekeyshowcontent').prepend(txt3);
+            		
+					//console.log("测试map======>"+locationlist['buzhidao']);
+					//res[i].lampBefore = 0 ;
+					if(res[i].lampBefore == 0){
+						if(res[i].lampWarn == 1){
+							onekeyvalidation[res[i].lampname] = true;
+							continue;
+						}
+						var linshiweizhi= locationlist[res[i].lampname] ;
+						if(res[i].category == "顶灯"){
+							linshiweizhi.setIcon(dingdengCloseIcon);
+						}else if(res[i].category == "路灯蓝"){
+							linshiweizhi.setIcon(ludengCloseIcon);
+						}else if(res[i].category == "路灯灰"){
+							linshiweizhi.setIcon(ludengGrayCloseIcon);
+						}else{
+							if(res[i].secondlevel == '路灯'){
+								linshiweizhi.setIcon(globalCloseShadowCloseIcon);
+							}else{
+								linshiweizhi.setIcon(globalLampCloseIcon);
+							}
+						}
+						//end
+					}else{
+						if(res[i].lampWarn == 1){
+							onekeyvalidation[res[i].lampname] = true;
+							continue;
+						}
+						
+						var linshiweizhi= locationlist[res[i].lampname] ;
+						if(res[i].category == "顶灯"){
+							linshiweizhi.setIcon(dingdengOpenIcon);
+						}else if(res[i].category == "路灯蓝"){
+							linshiweizhi.setIcon(ludengOpenIcon);
+						}else if(res[i].category == "路灯灰"){
+							linshiweizhi.setIcon(ludengGrayOpenIcon);
+						}else{
+							if(res[i].secondlevel == '路灯'){
+								linshiweizhi.setIcon(globalOpenShadowOpenIcon);
+							}else{
+								linshiweizhi.setIcon(globalLampOpenIcon);
+							}
+						}
+						//end
+					}
+					
+            		//end
+            	}
+            	offset += (res.length==0?0:res.length);
+            	//onekeyshow
+            	//捕获页
+				layer.open({
+				  type: 1,
+				  shade: false,
+				  title: false, //不显示标题
+				  offset: 'lb',
+				  area: ['350px', '400px'],
+				  content: $('#onekeyshow'), //捕获的元素，注意：最好该指定的元素要存放在body最外层，否则可能被其它的相对元素所影响
+				  cancel: function(){
+				    //layer.msg('捕获就是从页面已经存在的元素上，包裹layer的结构', {time: 5000, icon:6});
+				    $('#jindutiao').css('display','none');
+				    $('#onekeyshowcontent').html('');
+				  }
+				});
+                //console.log(JSON.stringify(res));
+            }, 'json');  
+			//end
+		}
+		function yijianguandeng(){
+			console.log("====start");
+			var nickName = "一键关灯" ;
+			dengzhuangtai = "关闭";
+        	top.layer.confirm('确定要“' + nickName + '”吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                
+                var timer1 = setInterval(onekey,1000);
+                openclosereload = true;
+                $.post('lamp/openclose', {
+                    id: 0
+                }, function (res) {
+                    layer.closeAll('loading');
+                    element.progress('demo', '100%')
+                    clearInterval(timer1);
+                    offset = 0 ;
+                    openclosereload = false;
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        //-----------------------------开始
+                       
+                        for(var i = 0 ;i < lightlist.length;i++){
+                        	if(onekeyvalidation[lightlist[i].lampname] == true){
+								continue;
+							}
+							lightlist[i].lampBefore = 0 ;
+							lamplist[lightlist[i].lampname].lampBefore = 0 ;
+							var linshiweizhi= locationlist[lightlist[i].lampname] ;
+							if(lightlist[i].category == "顶灯"){
+								linshiweizhi.setIcon(dingdengCloseIcon);
+							}else if(lightlist[i].category == "路灯蓝"){
+								linshiweizhi.setIcon(ludengCloseIcon);
+							}else if(lightlist[i].category == "路灯灰"){
+								linshiweizhi.setIcon(ludengGrayCloseIcon);
+							}else{
+								if(lightlist[i].secondlevel == '路灯'){
+									lamplist[lightlist[i].lampname].lampSecond = 0 ;
+									lightlist[i].lampSecond = 0 ;
+									linshiweizhi.setIcon(globalCloseShadowCloseIcon);
+								}else{
+									linshiweizhi.setIcon(globalLampCloseIcon);
+								}
+								//linshiweizhi.setIcon(globalCloseIcon);
+							}
+							// ---
+						}
+                        //-----------------------------结束
+                        //location.reload();//刷新当前页
+                        //insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+			//end
+		}
+        //btnCloseAll
+        $('#btnCloseAll').click(function () {
+        	var nickName = "一键关灯" ;
+        	top.layer.confirm('确定要“' + nickName + '”吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('lamp/openclose', {
+                    id: 0
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        //-----------------------------开始
+                       
+                        for(var i = 0 ;i < lightlist.length;i++){
+							lightlist[i].lampBefore = 0 ;
+							var linshiweizhi= locationlist[lightlist[i].lampname] ;
+							if(lightlist[i].category == "顶灯"){
+								linshiweizhi.setIcon(dingdengCloseIcon);
+							}else if(lightlist[i].category == "路灯蓝"){
+								linshiweizhi.setIcon(ludengCloseIcon);
+							}else if(lightlist[i].category == "路灯灰"){
+								linshiweizhi.setIcon(ludengGrayCloseIcon);
+							}else{
+								linshiweizhi.setIcon(globalCloseIcon);
+							}
+							// ---
+						}
+                        //-----------------------------结束
+                        //location.reload();//刷新当前页
+                        //insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+            //
+        });
+
+        // 显示表单弹窗
+        function showEditModel(mLamp,cus) {
+        	var localChecked = false ;//灯塔和路灯的区分
+        	var openimg = "${ctxPath}/assets/images/light/lighthouse.png" ;
+        	var closeimg = "${ctxPath}/assets/images/light/lighthouse-c.png" ;
+        	if(mLamp){
+        		if(mLamp.avatar != null && mLamp.avatar != ""){
+        			openimg = "${ctxPath}/light/config/img/"+mLamp.avatar ;
+        		}
+				if(mLamp.unavatar != null && mLamp.unavatar != ""){
+					closeimg = "${ctxPath}/light/config/img/"+mLamp.unavatar ;
+        		}
+        	}
+        	layer.open({
+                type: 1,
+                title: '路灯'+' 【'+(mLamp ? mLamp.nickName : '未知')+'】'  ,
+                content: mLamp.secondlevel=='路灯'?$('#modelLamp2').html():$('#modelLamp').html(),
+                success: function (layero, dIndex) {
+                    $(layero).children('.layui-layer-content').css('overflow', 'visible');
+                    //form = layui.form; //只有执行了这一步，部分表单元素才会自动修饰成功
+                    
+                    var url = mLamp ? 'lamp/update' : 'lamp/add';
+                    // 回显数据
+                    //var roleIds = new Array();
+                    if (mLamp) {
+                        //$('input[name="videoname"]').attr('readonly', 'readonly');
+                        form.val('modelLampForm', mLamp);
+                        
+                       /*  if(mLamp.lampLeft == 1){
+                        	document.getElementById('left').src = openimg ;
+                        }else{
+                        	document.getElementById('left').src = closeimg ;
+                        } */
+                        if(mLamp.lampBefore == 1){
+                        	document.getElementById('before').src = openimg ;
+                        	if(mLamp.category == "顶灯"){
+                        		document.getElementById('before').style.width = "46px" ;
+                        		document.getElementById('before').style.height = "24px" ;
+                        		document.getElementById("lampBefore").nextSibling.style.cssText = "margin-top:11px" ;
+                        		//$('.layui-form-switch').css('margin-top', '11px');
+                        	}
+                        }else{
+                        	document.getElementById('before').src = closeimg ;
+                        	if(mLamp.category == "顶灯"){
+                        		document.getElementById('before').style.width = "46px" ;
+                        		document.getElementById('before').style.height = "24px" ;
+                        		document.getElementById("lampBefore").nextSibling.style.cssText = "margin-top:11px" ;
+                        		//$('.layui-form-switch"]').css('margin-top', '11px');
+                        	}
+                        }
+                        /* if(mLamp.lampAfter == 1){
+                        	document.getElementById('after').src = openimg ;
+                        }else{
+                        	document.getElementById('after').src = closeimg ;
+                        }
+                        if(mLamp.lampRight == 1){
+                        	document.getElementById('right').src = openimg ;
+                        }else{
+                        	document.getElementById('right').src = closeimg ;
+                        } */
+                        /* for (var i = 0; i < mUser.roles.length; i++) {
+                            roleIds.push(mUser.roles[i].roleId);
+                        } */
+                    } else {
+                        //form.render('radio');
+                        console.log("lampname===============>"+cus.lampname);
+                       /*  var body = layer.getChildFrame('form', dIndex);  // body.html() body里面的内容 
+                        var div = layero.find('iframe').contents().find('#modelLampForm');
+                        body.find("#lampname").val(cus.lampname);  // 方式一
+                        body.find("#lat").val(cus.lat);
+                        body.find("#lng").val(cus.lng); */
+						form.val("modelLampForm", {
+						  "lampname": cus.lampname // "name": "value"
+						  ,"lat": cus.lat
+						  ,"lng": cus.lng
+						  //,"check[write]": true
+						  //,"open": false
+						  //,"desc": "我爱layui"
+						});
+                        //设置经度纬度
+                    }
+                    //formSelects.render('roleId', {init: roleIds});
+                    form.on('switch(direction)', function(data){
+		           	  console.log(data.elem); //得到checkbox原始DOM对象
+		           	  console.log(data.elem.checked); //是否被选中，true或者false
+		           	  console.log(data.value); //复选框value值，也可以通过data.elem.value得到
+		           	  var fx = data.elem.name ;
+		           	  var flag = data.elem.checked ;
+		           	  globalChecked = flag ;
+		           	  localChecked = false ;
+		           	  if(fx == 'lampBefore'){
+		           		  if(flag == true){
+		           			  document.getElementById('before').src = openimg ;
+		           			  mLamp.lampBefore = 1 ;
+		           		  }else{
+		           			  document.getElementById('before').src = closeimg ;
+		           			  mLamp.lampBefore = 0 ;
+		           		  }
+		           	  }
+		           	  $('button[lay-filter="modelLampSubmit"]').click();
+		           	  console.log(data.othis); //得到美化后的DOM对象
+		           	});  
+                    //=========================
+                    form.on('switch(direction2)', function(data){
+		           	  var fx = data.elem.name ;
+		           	  var flag = data.elem.checked ;
+		           	  globalChecked = flag ;
+		           	  localChecked = true ;
+		           	  if(fx == 'lampSecond'){
+		           		  if(flag == true){
+		           			  //document.getElementById('before').src = openimg ;
+		           			  mLamp.lampSecond = 1 ;
+		           		  }else{
+		           			  //document.getElementById('before').src = closeimg ;
+		           			  mLamp.lampSecond = 0 ;
+		           		  }
+		           	  } 
+		           	  $('button[lay-filter="modelLampSubmit"]').click();
+		           	  console.log(data.othis); //得到美化后的DOM对象
+		           	});  
+                    // 表单提交事件
+                    form.on('submit(modelLampSubmit)', function (data) {
+                        //data.field.roleIds = formSelects.value('roleId', 'valStr');
+                        layer.load(2);
+                        $.post(url, data.field, function (res) {
+                        	
+                            layer.closeAll('loading');
+                            if (res.code == 200) {
+                                layer.close(dIndex);
+                                //layer.msg(res.msg+",串口："+res.smsg, {icon: 1});
+                                //var locationlist = {} ;
+                        		//var lightlist = [] ;
+                                if(globalChecked){//代表开灯
+                                	if(mLamp.category!=null&&mLamp.category!=''){
+                                		if(mLamp.category == '路灯蓝'){
+                                			//路灯循环控制同组路灯
+                                			for(var i = 0 ;i < lightlist.length;i++){
+                                				if(mLamp.grouping == lightlist[i].grouping){
+                                					var tmpcus = locationlist[lightlist[i].lampname] ;
+                                					tmpcus.setIcon(ludengOpenIcon);
+                                					lightlist[i].lampBefore = 1 ;
+                                					lamplist[lightlist[i].lampname].lampBefore = 1;
+                                				}
+                                			}
+                                			cus.setIcon(ludengOpenIcon);
+                                		}else if(mLamp.category == '路灯灰'){
+                                			//路灯循环控制同组路灯
+                                			for(var i = 0 ;i < lightlist.length;i++){
+                                				if(mLamp.grouping == lightlist[i].grouping){
+                                					var tmpcus = locationlist[lightlist[i].lampname] ;
+                                					tmpcus.setIcon(ludengGrayOpenIcon);
+                                					lightlist[i].lampBefore = 1 ;
+                                					lamplist[lightlist[i].lampname].lampBefore = 1;
+                                				}
+                                			}
+                                			cus.setIcon(ludengGrayOpenIcon);
+                                			 
+                                		}else if(mLamp.category == '顶灯'){
+                                			//顶灯循环控制同组顶灯
+                                			for(var i = 0 ;i < lightlist.length;i++){
+                                				if(mLamp.grouping == lightlist[i].grouping){
+                                					var tmpcus = locationlist[lightlist[i].lampname] ;
+                                					tmpcus.setIcon(dingdengOpenIcon);
+                                					lightlist[i].lampBefore = 1 ;
+                                					lamplist[lightlist[i].lampname].lampBefore = 1;
+                                				}
+                                			}
+                                			cus.setIcon(dingdengOpenIcon);
+                                		}else{//灯塔
+                                			if(localChecked == true){//路灯开灯
+                                				if(mLamp.lampBefore == 0){//灯塔关灯状态
+                                					cus.setIcon(globalCloseShadowOpenIcon);
+                                				}else{//灯塔开灯状态
+                                					cus.setIcon(globalOpenShadowOpenIcon);
+                                				}
+                                			}else{//灯塔开灯
+                                				if(mLamp.secondlevel == "路灯"){//带路灯灯塔
+                                					if(mLamp.lampSecond == 0){//路灯关灯状态
+                                						cus.setIcon(globalOpenShadowCloseIcon);
+                                					}else{//路灯开灯状态
+                                						cus.setIcon(globalOpenShadowOpenIcon);
+                                					}
+                                				}else if(mLamp.secondlevel == "同城"){//同城也属于普通灯塔
+                                					//灯塔循环控制同城灯塔
+                                        			for(var i = 0 ;i < lightlist.length;i++){
+                                        				if(mLamp.memo1 == lightlist[i].memo1){
+                                        					var tmpcus = locationlist[lightlist[i].lampname] ;
+                                        					tmpcus.setIcon(globalLampOpenIcon);
+                                        					lightlist[i].lampBefore = 1 ;
+                                        					lamplist[lightlist[i].lampname].lampBefore = 1;
+                                        				}
+                                        			}
+                                				}else{//普通灯塔
+                                					//cus.setIcon(globalOpenIcon);
+                                					cus.setIcon(globalLampOpenIcon);
+                                					
+                                				}
+                                			}
+                                			//cus.setIcon(globalOpenIcon);
+                                		}
+                                	}else{
+                                		//cus.setIcon(globalOpenIcon);
+                                		cus.setIcon(globalLampOpenIcon);//普通灯塔开灯
+                                		
+                                	}
+                                	
+                                }else{//代表关灯
+                                	if(mLamp.category!=null&&mLamp.category!=''){
+                                		if(mLamp.category == '路灯蓝'){
+                                			//路灯循环控制同组路灯
+                                			for(var i = 0 ;i < lightlist.length;i++){
+                                				if(mLamp.grouping == lightlist[i].grouping){
+                                					var tmpcus = locationlist[lightlist[i].lampname] ;
+                                					tmpcus.setIcon(ludengCloseIcon);
+                                					lightlist[i].lampBefore = 0 ;
+                                					lamplist[lightlist[i].lampname].lampBefore = 0;
+                                				}
+                                			}
+                                			cus.setIcon(ludengCloseIcon);
+                                		}else if (mLamp.category == '路灯灰'){
+                                			//路灯循环控制同组路灯
+                                			for(var i = 0 ;i < lightlist.length;i++){
+                                				if(mLamp.grouping == lightlist[i].grouping){
+                                					var tmpcus = locationlist[lightlist[i].lampname] ;
+                                					tmpcus.setIcon(ludengGrayCloseIcon);
+                                					lightlist[i].lampBefore = 0 ;
+                                					lamplist[lightlist[i].lampname].lampBefore = 0;
+                                				}
+                                			}
+                                			cus.setIcon(ludengGrayCloseIcon);
+                                			
+                                		}else if(mLamp.category == '顶灯'){
+                                			//顶灯循环控制同组顶灯
+                                			for(var i = 0 ;i < lightlist.length;i++){
+                                				if(mLamp.grouping == lightlist[i].grouping){
+                                					var tmpcus = locationlist[lightlist[i].lampname] ;
+                                					tmpcus.setIcon(dingdengCloseIcon);
+                                					lightlist[i].lampBefore = 0 ;
+                                					lamplist[lightlist[i].lampname].lampBefore = 0;
+                                				}
+                                			}
+                                			cus.setIcon(dingdengCloseIcon);
+                                		}else{//灯塔
+                                			if(localChecked == true){//路灯关灯
+                                				if(mLamp.lampBefore == 0){//灯塔关灯状态
+                                					cus.setIcon(globalCloseShadowCloseIcon);
+                                				}else{//灯塔开灯状态
+                                					cus.setIcon(globalOpenShadowCloseIcon);
+                                				}
+                                			}else{//灯塔关灯
+                                				if(mLamp.secondlevel == "路灯"){//带路灯灯塔
+                                					if(mLamp.lampSecond == 0){//路灯关灯状态
+                                						cus.setIcon(globalCloseShadowCloseIcon);
+                                					}else{//路灯开灯状态
+                                						cus.setIcon(globalCloseShadowOpenIcon);
+                                					}
+                                				}else if(mLamp.secondlevel == "同城"){//同城也属于普通灯塔
+                                					//灯塔循环控制同城灯塔
+                                        			for(var i = 0 ;i < lightlist.length;i++){
+                                        				if(mLamp.memo1 == lightlist[i].memo1){
+                                        					var tmpcus = locationlist[lightlist[i].lampname] ;
+                                        					tmpcus.setIcon(globalLampCloseIcon);
+                                        					lightlist[i].lampBefore = 0 ;
+                                        					lamplist[lightlist[i].lampname].lampBefore = 0;
+                                        				}
+                                        			}
+                                				}else{//普通灯塔
+                                					//cus.setIcon(globalCloseIcon);
+                                					cus.setIcon(globalLampCloseIcon);
+                                					
+                                				}
+                                			}
+                                			//cus.setIcon(globalCloseIcon);
+                                		}
+                                	}else{
+                                		//cus.setIcon(globalCloseIcon);
+                                		cus.setIcon(globalLampCloseIcon);//普通灯塔
+                                		
+                                	}
+                                	
+                                	//cus.setIcon(globalCloseIcon);
+                                }
+                                
+                                //globalOpenIcon
+                                //globalCloseIcon
+                                //location.reload();//刷新当前页
+                                //insTb.reload();
+                            } else {//操作失败复位
+                            	if(globalChecked && localChecked == false){//灯塔开灯
+                            		document.getElementById('before').src = closeimg ;
+                            		mLamp.lampBefore = 0 ;//给灯塔复位关灯状态
+                            		form.val("modelLampForm", {
+                            			  "lampBefore": false // "name": "value"
+                            			});
+                            	}else if(globalChecked == false && localChecked == true){//路灯关闭
+                            		mLamp.lampSecond = 1 ;//给路灯复位开灯状态
+                            		form.val("modelLampForm", {
+                            			  "lampSecond": true // "name": "value"
+                            		});
+                            	}else if(globalChecked && localChecked){//路灯选中
+                            		mLamp.lampSecond = 0 ;
+                            		form.val("modelLampForm", {
+                          			  "lampSecond": false // "name": "value"
+                          			});
+                            	}else{//灯塔关灯
+                            		document.getElementById('before').src = openimg ;
+                            		mLamp.lampBefore = 1 ;
+                            		form.val("modelLampForm", {
+                          			  "lampBefore": true // "name": "value"
+                          			});
+                            	}
+                                layer.msg(res.msg+",串口："+res.smsg, {icon: 2});
+                            }
+                        }, 'json');
+                        return false;
+                    });
+                    //---------------------------
+                }
+            });
+            
+            	
+            form.render();
+            if(mLamp.category == "顶灯"){
+        		document.getElementById("lampBefore").nextSibling.style.cssText = "margin-top:11px" ;
+        		//$('.layui-form-switch').css('margin-top', '11px');
+        	}
+            /*  else if(fx == 'lampAfter'){
+		  		  if(flag == true){
+		  			  document.getElementById('after').src = openimg ;
+		  		  }else{
+		  			  document.getElementById('after').src = closeimg ;
+		  		  }
+		  	  }else if(fx == 'lampLeft'){
+		  		  if(flag == true){
+		  			  document.getElementById('left').src = openimg ;
+		  		  }else{
+		  			  document.getElementById('left').src = closeimg ;
+		  		  }
+		  	  }else if(fx == 'lampRight'){
+		  		  if(flag == true){
+		  			  document.getElementById('right').src = openimg ;
+		  		  }else{
+		  			  document.getElementById('right').src = closeimg ;
+		  		  }
+		  	  } */
+            //---------------end
+        }
+
+        // 删除
+        function doDel(rtspId, nickName) {
+            top.layer.confirm('确定要删除“' + nickName + '”吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('rtsp/delete', {
+                    userId: userId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+
+        
+		
+        // 停止推流
+        function stopRtmp(rtspId, nickName) {
+            top.layer.confirm('确定要停止“' + nickName + '”推流服务吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('rtsp/stop', {
+                	rtspId: rtspId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+        // 推流
+        function pushRtmp(rtspId, nickName) {
+            top.layer.confirm('确定要推流“' + nickName + '”到服务器吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('rtsp/push', {
+                	rtspId: rtspId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+        
+        setInterval(function(){
+        	//location.reload();//刷新当前页
+        	/* for(var i = 0;i<dellamplist.length;i++){
+        		dellamplist[i].remove();
+        	} */
+        	if(openclosereload){
+        		return;
+        	}
+        	//----------------------------------------------ajax start
+        	$.post('lamp/list', {
+	            type: '1',
+	            isOperate:'have'
+	        }, function (res) {
+	            layer.closeAll('loading');
+	            if (res.code == 200) {
+	                //layer.msg(res.msg, {icon: 1});
+	                 //showEditModel(res.lamp,null);
+	                 var list = res.lamp ;
+	                 lightlist = list ;
+	                 for(var i = 0 ;i < list.length;i++){
+	                	 //====================循环开始
+	                	 lamplist[list[i].lampname] = list[i] ;
+	                	var tmpIcon = new LightIcon({iconUrl: '${ctxPath}/assets/images/light/lighthouse-c.png'}) ;
+	                	if(list[i].code != null && list[i].code !=""){
+	                		//"${ctxPath}/light/config/img/"+((d.avatar==null ||d.avatar=='')?'lighthouse.png':d.avatar
+	                		if(list[i].code == "0000"){
+	                			tmpIcon = new LightIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                			if(list[i].category == "顶灯"){
+	                				tmpIcon = new TopIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                			}
+	                			
+	                			if(list[i].category == "灯塔"){
+	                				tmpIcon = new lampIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                			}
+	                			if(list[i].secondlevel == "路灯" && list[i].lampSecond == 0){
+	                				tmpIcon = new ShadowIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                			}
+	                			if(list[i].secondlevel == "路灯" && list[i].lampSecond == 1){
+	                				tmpIcon = new ShadowOpenIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                			}
+	                			//ShadowIcon
+	                		}else if(list[i].code == "1111"){
+	                			tmpIcon = new LightIcon({iconUrl: ((list[i].avatar!='')?("${ctxPath}/light/config/img/"+list[i].avatar):'${ctxPath}/assets/images/light/lighthouse.png')}) ;
+	                			if(list[i].category == "顶灯"){
+	                				tmpIcon = new TopIcon({iconUrl: ((list[i].avatar!='')?("${ctxPath}/light/config/img/"+list[i].avatar):'${ctxPath}/assets/images/light/lighthouse.png')}) ;
+	                			}
+	                			
+	                			if(list[i].category == "灯塔"){
+	                				tmpIcon = new lampIcon({iconUrl: ((list[i].avatar!='')?("${ctxPath}/light/config/img/"+list[i].avatar):'${ctxPath}/assets/images/light/lighthouse.png')}) ;
+	                			}
+	                			if(list[i].secondlevel == "路灯" && list[i].lampSecond == 1){
+	                				tmpIcon = new ShadowOpenIcon({iconUrl: ((list[i].avatar!='')?("${ctxPath}/light/config/img/"+list[i].avatar):'${ctxPath}/assets/images/light/lighthouse.png')}) ;
+	                			}
+	                			if(list[i].secondlevel == "路灯" && list[i].lampSecond == 0){
+	                				tmpIcon = new ShadowIcon({iconUrl: ((list[i].avatar!='')?("${ctxPath}/light/config/img/"+list[i].avatar):'${ctxPath}/assets/images/light/lighthouse.png')}) ;
+	                			}
+	                		}else{
+	                			tmpIcon = new LightIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                			if(list[i].secondlevel == "路灯"){
+	                				tmpIcon = new ShadowIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                			}
+	                			
+	                			if(list[i].category == "灯塔"){
+	                				tmpIcon = new lampIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                			}
+	                		}
+	                	}else{
+	                		tmpIcon = new LightIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                		if(list[i].category == "顶灯"){
+	                			tmpIcon = new TopIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                		}
+	                		if(list[i].secondlevel == "路灯"){
+	            				tmpIcon = new ShadowIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	            			}
+	                		//lampIcon
+	                		if(list[i].category == "灯塔"){
+	                			tmpIcon = new lampIcon({iconUrl: ((list[i].unavatar!='')?("${ctxPath}/light/config/img/"+list[i].unavatar):'${ctxPath}/assets/images/light/lighthouse-c.png')}) ;
+	                		}
+	                	}
+						/* var tmplocation = L.marker([list[i].lat, list[i].lng], {icon: tmpIcon}).addTo(mymap).on('click',function(e){
+							var _this = this ;
+							showEditModel(lamplist["lamp-"+e.latlng.lat.toString()+e.latlng.lng.toString()],_this);
+							//console.log("--------light");
+						}); */
+						//locationlist[list[i].lampname] = tmplocation ;
+						locationlist[list[i].lampname].setIcon(tmpIcon);
+						//dellamplist.push(tmplocation);
+	                	 //====================循环结束
+	                 }
+	                 console.log("----------------修改");
+	                //修改
+	            } else {
+	                //layer.msg(res.msg, {icon: 2});
+	                //showEditModel(null,cus);
+	                //layer.msg(res.msg, {icon: 2});
+	                console.log("----------------添加");
+	                //添加
+	            }
+	        }, 'json');
+        	//----------------------------------------------ajax end
+        	console.log("页面没隔30秒刷新一次");
+        },30*1000);
+		//end
+    });
+</script>
+
+</body>
+<div id="onekeyshow" style="padding-left:5px;padding-right:20px;background-color:#F8F8F8;border:0px solid red;">
+	<div id="jindutiao" class="layui-progress layui-progress-big" lay-showPercent="yes" lay-filter="demo" style="display:none">
+	  <div class="layui-progress-bar layui-bg-green" lay-percent="5%"></div>
+	</div>
+	<div id="onekeyshowcontent">
+	</div>
+</div>
+</html>

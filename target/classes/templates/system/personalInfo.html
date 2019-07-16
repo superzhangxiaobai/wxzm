@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>个人信息</title>
+    <link rel="stylesheet" href="${ctxPath}/assets/libs/layui/css/layui.css">
+    <link rel="stylesheet" href="${ctxPath}/assets/css/index.css">
+    <script type="text/javascript" src="${ctxPath}/assets/libs/layui/layui.js" charset="utf-8"></script>
+    <style>
+    	.layui-form-item .layui-input-inline {
+		    width: 390px;
+		}
+    </style>
+</head>
+<body>
+<div class="layui-tab page-content-wrap">
+    <ul class="layui-tab-title">
+        <li class="layui-this">修改资料</li>
+    </ul>
+    <div class="layui-tab-content">
+        <div class="layui-tab-item layui-show">
+            <form class="layui-form" lay-filter="modelPersonInfoForm"  style="width: 90%;padding-top: 20px;">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">ID：</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="userId" disabled autocomplete="off" class="layui-input layui-disabled" >
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">用户名：</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="username" disabled autocomplete="off" class="layui-input layui-disabled" >
+                    </div>
+                </div>
+                 <div class="layui-form-item">
+                    <label class="layui-form-label">昵称：</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="nickName" required  lay-verify="required" placeholder="请输入昵称" autocomplete="off" class="layui-input" >
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">姓名：</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="trueName"    placeholder="请输入姓名" autocomplete="off" class="layui-input" >
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">手机：</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="phone"  lay-verify="customphone" placeholder="请输入手机号" autocomplete="off" class="layui-input" >
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">邮箱：</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="email"  lay-verify="customemail" placeholder="请输入邮箱" autocomplete="off" class="layui-input" >
+                    </div>
+                </div>
+                <div class="layui-form-item">
+		            <label class="layui-form-label">图像：</label>
+		            <div class="layui-input-inline">
+		                <input id="avatar" name="avatar" placeholder="请上传图片" type="text" class="layui-input" maxlength="50"
+		                        />
+						
+						
+		            </div>
+					<div class="layui-btn-container">
+					<button style="float:left" id="avatarupload" class="layui-btn layui-btn-normal" type="button">上传</button>
+					<button style="float:left" id="avatarusee" class="layui-btn layui-btn-normal" type="button">查看</button>
+					
+					</div>
+		        </div>
+                <!-- <div class="layui-form-item layui-form-text">
+                    <label class="layui-form-label">备注：</label>
+                    <div class="layui-input-block">
+                        <textarea name="desc" placeholder="请输入内容" class="layui-textarea"></textarea>
+                    </div>
+                </div> -->
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn layui-btn-normal" lay-submit lay-filter="adminInfo">立即提交</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+    </div>
+</div>
+
+<script type="text/javascript" src="${ctxPath}/assets/js/common.js"></script>
+<script>
+    layui.use(['form','element','upload','layer'], function(){
+        var form = layui.form;
+        var element = layui.element;
+        var $ = layui.jquery;
+        var layer = layui.layer;
+      	//得到 upload 对象
+        var upload = layui.upload;
+        
+        //form.val('modelPersonInfoForm', ${loginUser});
+        form.val("modelPersonInfoForm", {
+			  "userId": '${loginUser.userId}' // "name": "value"
+			  ,"username": '${loginUser.username}'
+			  ,"email": '${loginUser.email}'
+			  ,"nickName": '${loginUser.nickName}'
+			  ,"trueName": '${loginUser.trueName}'
+			  ,"phone": '${loginUser.phone}'
+			  ,"avatar": '${loginUser.avatar}'
+			});
+        $('input[name="avatar"]').attr('readonly', 'readonly');
+        //--------------------------------------------------------------------image start
+        //上传图像
+        var unuploadInst = upload.render({
+              elem: '#avatarupload' //绑定元素
+              ,url: 'light/user/upload' //上传接口
+              ,done: function(res,index, upload){
+            	
+           	    if(res.code == 200){
+           	     
+           	      $('input[name="avatar"]').val(res.img);
+           	      //$('input[name="unavatar"]').attr('readonly', 'readonly');
+           	   	  layer.msg(res.msg, {icon: 1});
+           	    }else{
+           	    	layer.msg(res.msg, {icon: 2});
+           	    }
+            	//获取当前触发上传的元素，一般用于 elem 绑定 class 的情况，注意：此乃 layui 2.1.0 新增
+            	var item = this.item;
+            	layer.closeAll('loading'); //关闭loading
+            	
+              }
+          	  ,accept: 'images' //允许上传的文件类型
+              ,field:'file'
+           	  ,choose: function(obj){
+           		    obj.preview(function(index, file, result){
+           		      console.log(index); //得到文件索引
+           		      console.log(file); //得到文件对象
+           		      console.log(result); //得到文件base64编码，比如图片
+           		    });
+           	  }
+              ,before: function(obj){ //obj参数包含的信息，跟 choose回调完全一致，可参见上文。
+            	    layer.load(); //上传loading
+              }
+              ,error: function(index, upload){
+            	  layer.msg(res.msg, {icon: 2});
+            	  //当上传失败时，你可以生成一个“重新上传”的按钮，点击该按钮时，执行 upload() 方法即可实现重新上传
+            	  layer.closeAll('loading'); //关闭loading
+            	  
+                //请求异常回调
+              }
+            });
+        	 
+        	 $("#avatarusee").click(function(e){
+        		 layer.photos({
+        		        photos: { "data": [{"src": "${ctxPath}/light/user/img/"+ $('input[name="avatar"]').val()}] }
+        		 		,area:['100px','100px']
+			        	,shift: 1
+			    		,closeBtn:1
+			    		//,offset:'100px'
+			    		,shade: 0
+			    		,shadeClose:true
+        		 		//,anim: 5
+        		 });
+        	 });
+        //--------------------------------------------------------------------image end
+        form.render();
+        //监听信息提交
+        form.on('submit(adminInfo)', function(data){
+            //layer.msg(JSON.stringify(data.field));
+            layer.load(2);
+            $.post('light/user/update', data.field, function (res) {
+                layer.closeAll('loading');
+                if (res.code == 200) {
+                    layer.msg(res.msg, {icon: 1});
+                    setTimeout(function(){ 
+                    	location.reload();//刷新当前页
+                    }, 3000);
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                }
+            }, 'json');
+            return false;
+        });
+        
+        //自定义验证规则
+        form.verify({
+          customemail: function(value){
+            if(value.length == 0){
+              
+            }else{
+            	var reg = new RegExp("^[a-z0-9]+([._\\-]*[a-z0-9])*@([a-z0-9]+[-a-z0-9]*[a-z0-9]+.){1,63}[a-z0-9]+$"); //正则表达式
+            	if(!reg.test(value)){ //正则验证不通过，格式不对
+           	　　　　return '邮箱格式不正确';
+           	　　}else{
+           	　　　　//return true;
+           	　　}
+            }
+          },
+          customphone: function(value){
+              if(value.length == 0){
+                
+              }else{
+              	var reg = new RegExp("^0{0,1}(13[0-9]|15[7-9]|153|156|18[7-9])[0-9]{8}$"); //正则表达式
+              	if(!reg.test(value)){ //正则验证不通过，格式不对
+             	　　　　return '手机格式不正确';
+             	　　}else{
+             	　　　　//return true;
+             	　　}
+              }
+            }
+        });
+        //监听密码提交
+        /* form.on('submit(adminPassword)', function(data){
+            layer.msg(JSON.stringify(data.field));
+            return false;
+        }); */
+    });
+</script>
+</body>
+</html>

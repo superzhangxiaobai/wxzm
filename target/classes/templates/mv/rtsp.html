@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>摄像头管理</title>
+    <link rel="stylesheet" href="${ctxPath}/assets/libs/layui/css/layui.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/module/admin.css"/>
+    <link rel="stylesheet" href="${ctxPath}/assets/module/formSelects/formSelects-v4.css"/>
+</head>
+
+<body>
+<% include("../layout/loading.html"){} %>
+
+<!-- 正文开始 -->
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-body">
+            <div class="layui-form toolbar">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <select id="sltKey">
+                            <option value="">请选择搜索条件</option>
+                            <option value="videoname">名称</option>
+                            <option value="videourl">流地址</option>
+                            <option value="videoaddress">物理地址</option>
+                        </select>
+                    </div>
+                    <div class="layui-inline">
+                        <input id="edtSearch" class="layui-input" type="text" placeholder="输入关键字"/>
+                    </div>
+                    <div class="layui-inline">
+                        <button id="btnSearch" class="layui-btn icon-btn"><i class="layui-icon">&#xe615;</i>搜索</button>
+                        <button id="btnAdd" class="layui-btn icon-btn"><i class="layui-icon">&#xe654;</i>添加</button>
+                    </div>
+                </div>
+            </div>
+
+            <table class="layui-table" id="rtspTable" lay-filter="rtspTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 表格操作列 -->
+<script type="text/html" id="tableBar">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="edit">修改</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    <a class="layui-btn layui-btn-xs" lay-event="pushrtmp">推流</a>
+	<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="stop">停止</a>
+</script>
+<!-- 表格状态列 -->
+<script type="text/html" id="tableState">
+    <input type="checkbox" lay-filter="ckState" value="{{d.rtspId}}" lay-skin="switch"
+           lay-text="正在推流|未推流" {{d.state==1?'checked':''}}/>
+</script>
+<!-- 表单弹窗 -->
+<script type="text/html" id="modelRtsp">
+    <form id="modelRtspForm" lay-filter="modelRtspForm" class="layui-form model-form">
+        <input name="rtspId" type="hidden"/>
+        <div class="layui-form-item">
+            <label class="layui-form-label">名称</label>
+            <div class="layui-input-block">
+                <input name="videoname" placeholder="请输入名称" type="text" class="layui-input" maxlength="20"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">流地址</label>
+            <div class="layui-input-block">
+                <input name="videourl" placeholder="请输入流地址" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">推流地址</label>
+            <div class="layui-input-block">
+                <input name="rtmpurl" placeholder="请输入推流地址" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">命令路径</label>
+            <div class="layui-input-block">
+                <input name="cmdpath" placeholder="请输入命令路径" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">经度</label>
+            <div class="layui-input-block">
+                <input name="lat" placeholder="请输入经度" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+		<div class="layui-form-item">
+            <label class="layui-form-label">纬度</label>
+            <div class="layui-input-block">
+                <input name="lng" placeholder="请输入纬度" type="text" class="layui-input" maxlength="50"
+                       lay-verType="tips" lay-verify="required" required/>
+            </div>
+        </div>
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label">物流地址</label>
+            <div class="layui-input-block">
+                <textarea name="videoaddress" placeholder="请输入物理地址" class="layui-textarea" maxlength="200" lay-verType="tips" lay-verify="required" required></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item text-right">
+            <button class="layui-btn layui-btn-primary" type="button" ew-event="closePageDialog">取消</button>
+            <button class="layui-btn" lay-filter="modelRtspSubmit" lay-submit>保存</button>
+        </div>
+    </form>
+</script>
+
+<!-- js部分 -->
+<script type="text/javascript" src="${ctxPath}/assets/libs/layui/layui.js"></script>
+<script type="text/javascript" src="${ctxPath}/assets/js/common.js"></script>
+<script>
+    layui.use(['layer', 'form', 'table', 'util', 'admin', 'formSelects'], function () {
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var form = layui.form;
+        var table = layui.table;
+        var util = layui.util;
+        var admin = layui.admin;
+        var formSelects = layui.formSelects;
+
+        // 渲染表格
+        var insTb = table.render({
+            elem: '#rtspTable',
+            url: 'rtsp/list',
+            page: true,
+            cellMinWidth: 100,
+            cols: [[
+                {type: 'numbers'},
+                {field: 'videoname', title: '名称'},
+                {field: 'videourl', title: '流地址'},
+                {field: 'rtmpurl', title: '推流地址'},
+                {field: 'cmdpath', title: '命令路径'},
+                {field: 'lat', title: '经度'},
+                {field: 'lng', title: '纬度'},
+                {field: 'videoaddress', title: '物理地址'},
+                {
+                    templet: function (d) {
+                        return util.toDateString(d.createTime);
+                    }, title: '创建时间'
+                },
+                {templet: '#tableState', title: '状态'},
+                {align: 'center', toolbar: '#tableBar', title: '操作', minWidth: 218}
+            ]]
+        });
+
+        // 添加
+        $('#btnAdd').click(function () {
+            showEditModel();
+        });
+
+        // 搜索
+        $('#btnSearch').click(function () {
+            var key = $('#sltKey').val();
+            var value = $('#edtSearch').val();
+            if (value && !key) {
+                layer.msg('请选择搜索条件', {icon: 2});
+            }
+            insTb.reload({where: {searchKey: key, searchValue: value}});
+        });
+
+        // 工具条点击事件
+        table.on('tool(rtspTable)', function (obj) {
+            var data = obj.data;
+            var layEvent = obj.event;
+            if (layEvent === 'edit') { // 修改
+                showEditModel(data);
+            } else if (layEvent === 'del') { // 删除
+                doDel(data.rtspId, data.videoname);
+            } else if (layEvent === 'pushrtmp') { // 重置密码
+            	pushRtmp(data.rtspId, data.videoname);
+            } else if (layEvent === 'stop') {
+            	stopRtmp(data.rtspId, data.videoname);
+            }
+        });
+
+        // 显示表单弹窗
+        function showEditModel(mRtsp) {
+            admin.open({
+                type: 1,
+                title: (mRtsp ? '修改' : '添加') + '摄像头视频',
+                content: $('#modelRtsp').html(),
+                success: function (layero, dIndex) {
+                    $(layero).children('.layui-layer-content').css('overflow', 'visible');
+                    var url = mRtsp ? 'rtsp/update' : 'rtsp/add';
+                    // 回显数据
+                    //var roleIds = new Array();
+                    if (mRtsp) {
+                        $('input[name="videoname"]').attr('readonly', 'readonly');
+                        form.val('modelRtspForm', mRtsp);
+                        /* for (var i = 0; i < mUser.roles.length; i++) {
+                            roleIds.push(mUser.roles[i].roleId);
+                        } */
+                    } else {
+                        form.render('radio');
+                    }
+                    //formSelects.render('roleId', {init: roleIds});
+                    // 表单提交事件
+                    form.on('submit(modelRtspSubmit)', function (data) {
+                        //data.field.roleIds = formSelects.value('roleId', 'valStr');
+                        layer.load(2);
+                        $.post(url, data.field, function (res) {
+                            layer.closeAll('loading');
+                            if (res.code == 200) {
+                                layer.close(dIndex);
+                                layer.msg(res.msg, {icon: 1});
+                                insTb.reload();
+                            } else {
+                                layer.msg(res.msg, {icon: 2});
+                            }
+                        }, 'json');
+                        return false;
+                    });
+                }
+            });
+        }
+
+        // 删除
+        function doDel(rtspId, nickName) {
+            top.layer.confirm('确定要删除“' + nickName + '”吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('rtsp/delete', {
+                    userId: userId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+
+        // 修改摄像头状态
+        form.on('switch(ckState)', function (obj) {
+            layer.load(2);
+            $.post('rtsp/updateState', {
+                rtspId: obj.elem.value,
+                state: obj.elem.checked ? 1 : 0
+            }, function (res) {
+                layer.closeAll('loading');
+                if (res.code == 200) {
+                    layer.msg(res.msg, {icon: 1});
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                    $(obj.elem).prop('checked', !obj.elem.checked);
+                    form.render('checkbox');
+                }
+            }, 'json');
+        });
+		
+        // 停止推流
+        function stopRtmp(rtspId, nickName) {
+            top.layer.confirm('确定要停止“' + nickName + '”推流服务吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('rtsp/stop', {
+                	rtspId: rtspId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+        // 推流
+        function pushRtmp(rtspId, nickName) {
+            top.layer.confirm('确定要推流“' + nickName + '”到服务器吗？', {
+                skin: 'layui-layer-admin'
+            }, function (i) {
+                top.layer.close(i);
+                layer.load(2);
+                $.post('rtsp/push', {
+                	rtspId: rtspId
+                }, function (res) {
+                    layer.closeAll('loading');
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {icon: 1});
+                        insTb.reload();
+                    } else {
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                }, 'json');
+            });
+        }
+
+    });
+</script>
+
+</body>
+</html>

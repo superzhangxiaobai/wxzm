@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.wf.ew.light.dao.OperateMapper">
+
+    <select id="selectByNickName" resultType="com.wf.ew.light.model.Operate">
+	        SELECT
+				lop.operate_id,
+				lop.nickname,
+				lop.operatecontent,
+				lop.create_time,
+				lop.update_time,
+				lop.state,
+				su.avatar AS memo
+			FROM
+				light_operate lop
+			LEFT JOIN sys_user su ON lop.nickname = su.nick_name
+			ORDER BY
+				lop.update_time DESC
+			LIMIT 0,
+			 4
+    </select>
+    
+</mapper>

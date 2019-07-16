@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>用户登录</title>
+    <link rel="stylesheet" href="${ctxPath}/assets/libs/layui/css/layui.css">
+    <!--必要样式-->
+    <link rel="stylesheet" href="${ctxPath}/assets/css/login.css">
+    <!--CSS加载动画框架Loaders.css-->
+   <link rel="stylesheet" href="${ctxPath}/assets/css/loaders.css">
+   <style>
+   		.layui-layer-dialog .layui-layer-content {
+		    position: relative;
+		    padding: 20px;
+		    line-height: 24px;
+		    word-break: break-all;
+		    overflow: hidden;
+		    font-size: 14px;
+		    overflow-x: hidden;
+		    overflow-y: auto;
+		    color:#000000;
+		}
+		.layui-form-danger:focus, .layui-form-danger+.layui-form-select .layui-input {
+			
+		}
+   </style>
+	<script>
+        if (window != top)
+            top.location.replace(location.href);
+    </script>
+   
+</head>
+<body>
+<div class='login'>
+    <div class='login_title'>
+        <span>用户登录</span>
+    </div>
+    <form class='login_fields layui-form'>
+        <div class='login_fields__user layui-form-item'>
+            <div class='icon'>
+                <img alt="" src='${ctxPath}/assets/images/user_icon_copy.png'>
+                <!-- <label class="layui-form-label"><i class="layui-icon layui-icon-username"></i></label> -->
+            </div>
+            <input type="text" name="username" lay-verify="username" lay-verType="tips" placeholder="账号" value="admin" autocomplete="off">
+            <!-- <input name="username" placeholder='账号' maxlength="16" type='text' lay-verType="tips"
+                               lay-verify="required|username" autocomplete="off" value=""/> -->
+           <!--  <div class='validation'>
+                <img alt="" src='${ctxPath}/assets/images/tick.png'>
+            </div> -->
+        </div>
+        <div class='login_fields__user layui-form-item'>
+            <div class='icon'>
+                <img alt="" src='${ctxPath}/assets/images/lock_icon_copy.png'>
+            </div>
+            <input name="password" placeholder='密码' maxlength="16" type='password' value="admin" lay-verType="tips" lay-verify="required" autocomplete="off">
+            <!-- <div class='validation'>
+                <img alt="" src='${ctxPath}/assets/images/tick.png'>
+            </div> -->
+        </div>
+        <div class='login_fields__user layui-form-item'>
+            <div class='icon'>
+                <img alt="" src='${ctxPath}/assets/images/key.png'>
+            </div>
+            <input name="code" placeholder='验证码' maxlength="4" type='text' lay-verType="tips"
+                                       lay-verify="required" autocomplete="off">
+            <div class='validation' style="opacity: 1; right: -5px;top: -3px;">
+                <canvas class="J_codeimg" id="myCanvas" >对不起，您的浏览器不支持canvas，请下载最新版浏览器!</canvas>
+                <!-- <img class="J_codeimg" src="${ctxPath }/assets/captcha"> -->
+            </div>
+        </div>
+        <div class='login_fields__submit layui-form-item'>
+            <input type='button' value='登录' lay-filter="loginSubmit" lay-submit>
+            <!-- <button lay-filter="loginSubmit" lay-submit>登 录</button> -->
+        </div>
+    </form>
+
+    <div class='disclaimer'>
+        <p>欢迎登录无线照明系统</p>
+    </div>
+</div>
+
+<!--登录认证显示  start-->
+<!-- <div class='authent'>
+    <div class="loader" style="height: 44px;width: 44px;margin-left: 28px;">
+        <div class="loader-inner ball-clip-rotate-multiple">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+    <p>认证中...</p>
+</div> -->
+<!--登录认证显示  end-->
+<!--<div class="OverWindows"></div>-->
+<script type="text/javascript" src="${ctxPath}/assets/js/jquery.min.js"></script>
+<script type="text/javascript" src="${ctxPath}/assets/libs/layui/layui.js"></script>
+<!--粒子背景依赖js-->
+<script type="text/javascript" src="${ctxPath}/assets/js/Particleground.js"></script>
+
+<script type="text/javascript">
+    
+layui.config({
+    base: 'assets/module/'
+}).use(['layer', 'form', 'index'], function () {
+    var $ = layui.jquery;
+    var layer = layui.layer;
+    var form = layui.form;
+    var index = layui.index;
+
+    //layer.alert('演示系统账号：admin  密码：admin');
+	$(document).on('keyup', function(event){ 
+		 if(event.keyCode ==13){
+			 $(":button").click();
+		  }
+		
+	});
+	var CodeVal = "";
+    // 表单提交
+    form.on('submit(loginSubmit)', function (obj) {
+    	if(CodeVal.toLowerCase().trim() != obj.field.code.toLowerCase().trim()){
+    		layer.msg('验证码不正确!', {icon: 5});
+    		return ;
+    	}
+    	//console.log(obj.field.code);
+        layer.load(2);
+        console.log('---------------------');
+        $.post('login', obj.field, function (res) {
+            if (200 == res.code) {
+                layer.msg('登录成功', {icon: 1, time: 1500}, function () {
+                    index.closeTabCache();
+                    location.replace('./');
+                });
+            } else {
+                layer.closeAll('loading');
+                layer.msg(res.msg, {icon: 5});
+                // $('.login-captcha').trigger('click');
+            }
+        }, 'JSON');
+        return false;
+    });
+	
+  	//自定义验证规则
+    form.verify({
+        username: function(value) {
+        	if(value.length == 0){
+        		return "请输入账号";
+        	}
+            /* if(value.length < 5) {
+                return '标题至少得5个字符啊';
+            } */
+        },
+        password: [/(.+){6,12}$/, '密码必须6到12位'],
+        verity: [/(.+){4}$/, '验证码必须是6位'],
+
+    });
+	Code();
+	function Code() {
+		//console.log("cap");
+		$.get('assets/mycaptcha', {
+            //lampId: lampId
+        }, function (res) {
+        	//console.log(res);
+        	showCheck(res);
+        	$("input[name=code]").val(res);
+        });  
+        
+    }
+    function showCheck(a) {
+        CodeVal = a;
+        var c = document.getElementById("myCanvas");
+        var ctx = c.getContext("2d");
+        ctx.clearRect(0, 0, 1000, 1000);
+        ctx.font = "80px 'Hiragino Sans GB'";
+        ctx.fillStyle = "#E8DFE8";
+        ctx.fillText(a, 0, 100);
+    }
+    // 图形验证码
+    $('.J_codeimg').click(function () {
+        //this.src = this.src + '?t=' + (new Date).getTime();
+    	Code();
+    });
+    //粒子背景特效
+    $('body').particleground({
+        dotColor: '#E8DFE8',
+        lineColor: '#133b88'
+    });
+    /* function showCheck() {
+        var c = document.getElementById("myCanvas");
+        var ctx = c.getContext("2d");
+        //ctx.clearRect(0, 0, 1000, 1000);
+        //ctx.font = "80px 'Hiragino Sans GB'";
+        //ctx.fillStyle = "#E8DFE8";
+        var img=new Image()
+        img.src="${ctxPath }/assets/captcha";
+        ctx.drawImage(img,0,0);
+        //ctx.fillText(a, 0, 100);
+    }
+    showCheck(); */
+});
+    
+</script>
+
+</body>
+</html>
